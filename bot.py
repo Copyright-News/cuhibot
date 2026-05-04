@@ -190,7 +190,7 @@ def locked_file(target: Path):
 
     if fd is None:
         raise TimeoutError(
-            f"Could not acquire lock on {target} (lock never obtained)")
+            f"Could not acquire lock on {target} after {max_retries} retries")
     try:
         yield
     finally:
@@ -256,18 +256,15 @@ def folder_mb(path: Path) -> float:
 
 
 def wipe_downloads(uid: int) -> float:
-    """Robustly delete the downloads folder and reset the session byte counter.
+    """Robustly delete the downloads folder and reset the session byte counters.
     
-    [FIXED] Added total_bytes reset and individual file unlinking for Windows stability.
+    [FIXED] Directly zeros counters in one atomic write instead of using large
+    negative sentinels which corrupted stored stats to deeply negative values.
     """
     root = udir(uid) / "downloads"
     freed = folder_mb(root)
-    
-    # Reset the persistent counters so the menu reflects the cleanup
-    _add_downloaded_bytes_sync(uid, -100_000_000_000) # Large negative to hit 0
-    _add_sent_files_sync(uid, -1_000_000_000)        # Large negative to hit 0
-    
-    # [FIXED] Force settings reload by ensuring they are written as 0
+
+    # Directly zero both counters in one atomic write
     path = settings_path(uid)
     with locked_file(path):
         try:
@@ -275,16 +272,19 @@ def wipe_downloads(uid: int) -> float:
             s["total_bytes"] = 0
             s["total_sent_files"] = 0
             path.write_text(json.dumps(s, indent=2), encoding="utf-8")
-        except: pass
-    
+        except (OSError, ValueError, json.JSONDecodeError):
+            pass
+
     if root.exists():
         # Individual unlink is safer on Windows than a raw rmtree
         for f in root.rglob("*"):
             if f.is_file():
-                try: f.unlink(missing_ok=True)
-                except: pass
+                try:
+                    f.unlink(missing_ok=True)
+                except OSError:
+                    pass
         shutil.rmtree(root, ignore_errors=True)
-    
+
     # Ensure the root is clean for the next run
     root.mkdir(parents=True, exist_ok=True)
     return freed
@@ -454,20 +454,18 @@ async def cookie_summary(uid: int) -> str:
 
 
 def _total_sent_sync(uid: int) -> int:
-    s = _read_settings_sync(uid)
-    if "total_sent_files" in s:
-        return s["total_sent_files"]
     path = settings_path(uid)
     with locked_file(path):
         try:
             s = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
         except Exception:
             s = {}
-        if "total_sent_files" not in s:
-            count = sum(e.get("sent", 0) for e in _read_history_sync(uid))
-            s["total_sent_files"] = count
-            path.write_text(json.dumps(s, indent=2), encoding="utf-8")
-    return s.get("total_sent_files", 0)
+        if "total_sent_files" in s:
+            return s["total_sent_files"]
+        count = sum(e.get("sent", 0) for e in _read_history_sync(uid))
+        s["total_sent_files"] = count
+        path.write_text(json.dumps(s, indent=2), encoding="utf-8")
+        return count
 
 async def total_sent(uid: int) -> int:
     return await asyncio.get_running_loop().run_in_executor(
@@ -964,6 +962,7 @@ async def flush(
                     with ExitStack() as stack:
                         try:
                             group = []
+                            valid_files = []
                             for f in chunk:
                                 if f.stat().st_size > TELEGRAM_FILE_LIMIT:
                                     continue
@@ -977,14 +976,15 @@ async def flush(
                                         group.append(InputMediaPhoto(fh))
                                     else:
                                         group.append(InputMediaVideo(fh, supports_streaming=True))
+                                valid_files.append(f)
                             
                             if not group:
                                 success = True
                                 break
 
                             await _send_group(target, group)
-                            sent += len(chunk)
-                            sent_files.extend(chunk)
+                            sent += len(group)
+                            sent_files.extend(valid_files)
                             success = True
                             break
                         except RetryAfter as exc:
@@ -1195,9 +1195,9 @@ async def realtime_download(
                     if f.name.endswith(('.part', '.ytdl', '.tmp')):
                         continue
                     try:
-                        s1 = await asyncio.to_thread(lambda: f.stat().st_size)
+                        s1 = await asyncio.to_thread(lambda _f=f: _f.stat().st_size)
                         await asyncio.sleep(0.5) # [FIXED] Safer gap for disk latency
-                        s2 = await asyncio.to_thread(lambda: f.stat().st_size)
+                        s2 = await asyncio.to_thread(lambda _f=f: _f.stat().st_size)
                         if s1 == s2:
                             seen.add(f)
                             buffer.append(f)
@@ -1227,7 +1227,7 @@ async def realtime_download(
                 seen.add(f)
                 buffer.append(f)
                 try:
-                    sz = await asyncio.to_thread(lambda: f.stat().st_size)
+                    sz = await asyncio.to_thread(lambda _f=f: _f.stat().st_size)
                     downloaded_bytes += sz
                     await add_downloaded_bytes(uid, sz)
                 except OSError:
@@ -1236,7 +1236,7 @@ async def realtime_download(
         await drain()
 
         if status:
-            if proc.returncode and proc.returncode != 0 and sent_count == 0:
+            if proc.returncode is not None and proc.returncode != 0 and sent_count == 0:
                 await status.set(f"⚠️ `{handle}` → Failed or blocked. (Exit: {proc.returncode})", force=True)
             else:
                 await status.set(f"📦 `{handle}` → {sent_count} file(s) on `{mode}`.", force=True)
@@ -1796,8 +1796,12 @@ async def handle_callback(
         lines = []
         for p in PLATFORMS:
             urls = await read_profiles(uid, p)
-            if urls: lines.append(f"# {p.upper()}"), lines.extend(urls), lines.append("")
-        if not lines: return
+            if urls:
+                lines.append(f"# {p.upper()}")
+                lines.extend(urls)
+                lines.append("")
+        if not lines:
+            return
         export_file = udir(uid) / "cuhibot_sources.txt"
         await asyncio.to_thread(export_file.write_text, "\n".join(lines), encoding="utf-8")
         with open(export_file, "rb") as fh:
@@ -1962,12 +1966,17 @@ async def cmd_link(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def cmd_export(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     uid, _, _ = _user(update)
-    if not _is_allowed(uid): return
+    if not _is_allowed(uid):
+        return
     lines = []
     for p in PLATFORMS:
         urls = await read_profiles(uid, p)
-        if urls: lines.append(f"# {p.upper()}"), lines.extend(urls), lines.append("")
-    if not lines: return
+        if urls:
+            lines.append(f"# {p.upper()}")
+            lines.extend(urls)
+            lines.append("")
+    if not lines:
+        return
     export_file = udir(uid) / "cuhibot_sources.txt"
     await asyncio.to_thread(export_file.write_text, "\n".join(lines), encoding="utf-8")
     with open(export_file, "rb") as fh:
@@ -2268,10 +2277,16 @@ def main() -> None:
                 except Exception:
                     pass
 
-        async def _start_poll_loop(application):
+        # [FIXED] Chain both callbacks instead of overwriting post_init.
+        # Overwriting would have silently killed _restore_schedules on every restart.
+        _original_post_init = app.post_init
+
+        async def _chained_post_init(application):
+            if _original_post_init is not None:
+                await _original_post_init(application)
             asyncio.ensure_future(_poll_loop())
 
-        app.post_init = _start_poll_loop
+        app.post_init = _chained_post_init
 
     app.run_polling(allowed_updates=["message", "callback_query"])
 
