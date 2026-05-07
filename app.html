@@ -41,35 +41,45 @@ html, body {
 
 .page {
   position: absolute; inset: 0; overflow-y: auto;
-  overscroll-behavior: none; /* prevent iOS bounce glitch during transition */
+  overscroll-behavior: none;
   padding-bottom: calc(var(--tab-height) + 20px);
-  background: var(--bg); /* solid background prevents see-through ghosting */
+  background: var(--bg);
   opacity: 0;
   visibility: hidden;
-  /* [SUPERPOWER] iOS Slide Transition */
-  transform: translate3d(100%, 0, 0);
+  transform: translate3d(60px, 0, 0);
   will-change: transform, opacity;
-  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.6s;
+  transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), visibility 0s 0.4s;
   pointer-events: none;
   -webkit-overflow-scrolling: touch;
   backface-visibility: hidden;
   z-index: 1;
 }
-.page.active { 
-  opacity: 1; 
-  visibility: visible; 
-  transform: translate3d(0, 0, 0); 
-  pointer-events: all; 
-  z-index: 2; 
-  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.32, 0.72, 0, 1); 
+.page.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translate3d(0, 0, 0);
+  pointer-events: all;
+  z-index: 2;
+  transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), visibility 0s;
 }
-.page.exit { 
-  opacity: 0; 
-  visibility: hidden; 
-  transform: translate3d(-30%, 0, 0); 
-  z-index: 1; 
-  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.6s; 
+.page.exit {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(-40px, 0, 0);
+  z-index: 1;
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), visibility 0s 0.4s;
 }
+
+/* ─ Staggered Content Entrance ─ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page.active .stat-cards   { animation: fadeSlideUp 0.45s 0.05s both ease-out; }
+.page.active .disk-card    { animation: fadeSlideUp 0.45s 0.12s both ease-out; }
+.page.active .list-group   { animation: fadeSlideUp 0.45s 0.08s both ease-out; }
+.page.active .sec-title    { animation: fadeSlideUp 0.4s  0.04s both ease-out; }
+.page.active .banner.show  { animation: fadeSlideUp 0.4s  0.02s both ease-out; }
 
 /* ─ Navigation Bar ─ */
 .nav-bar {
@@ -136,8 +146,10 @@ html, body {
   padding: 16px; border-radius: 16px;
   display: flex; flex-direction: column;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.stat-val { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
+.stat-card:active { transform: scale(0.96); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.stat-val { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; transition: color 0.3s; }
 .stat-lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); }
 
 /* ─ Progress/Disk ─ */
@@ -152,11 +164,13 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   width: 100%; padding: 14px; border-radius: 14px;
   border: none; cursor: pointer; font-size: 17px; font-weight: 600;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: opacity 0.15s, transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s;
   -webkit-tap-highlight-color: transparent;
+  position: relative; overflow: hidden;
 }
-.btn:active { opacity: 0.7; transform: scale(0.98); }
-.btn-primary { background: var(--blue); color: #fff; }
+.btn:active { opacity: 0.8; transform: scale(0.96); }
+.btn-primary { background: var(--blue); color: #fff; box-shadow: 0 4px 14px rgba(10, 132, 255, 0.3); }
+.btn-primary:active { box-shadow: 0 2px 6px rgba(10, 132, 255, 0.15); }
 .btn-secondary { background: var(--bg-tertiary); color: var(--blue); }
 .btn-danger { background: rgba(255, 69, 58, 0.15); color: var(--red); }
 .btn-sm { padding: 8px 16px; font-size: 15px; width: auto; border-radius: 10px; }
@@ -174,12 +188,15 @@ html, body {
 .tab {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  color: var(--text-secondary); transition: color 0.2s;
+  color: var(--text-secondary); transition: color 0.25s ease, transform 0.2s;
   background: none; border: none; cursor: pointer;
 }
+.tab:active { transform: scale(0.88); }
 .tab.active { color: var(--blue); }
-.tab svg { width: 24px; height: 24px; margin-bottom: 4px; }
-.tab-label { font-size: 10px; font-weight: 500; }
+.tab svg { width: 24px; height: 24px; margin-bottom: 4px; transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1); }
+.tab.active svg { transform: scale(1.12); }
+.tab-label { font-size: 10px; font-weight: 500; transition: font-weight 0.2s; }
+.tab.active .tab-label { font-weight: 700; }
 
 /* ─ Inputs ─ */
 .input-field {
@@ -200,16 +217,21 @@ html, body {
 .remove-btn:active { opacity: 0.7; }
 
 /* ─ Banner ─ */
+@keyframes bannerSlideIn {
+  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 .banner {
   margin: 16px; padding: 14px 16px; background: rgba(48, 209, 88, 0.15);
   border-radius: 14px; display: none; align-items: center; gap: 14px;
 }
-.banner.show { display: flex; }
-.dot { width: 10px; height: 10px; background: var(--green); border-radius: 50%; animation: blink 1.5s infinite; }
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.banner.show { display: flex; animation: bannerSlideIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) both; }
+.dot { width: 10px; height: 10px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
 
 /* ─ Empty State ─ */
-.empty-state { padding: 60px 20px; text-align: center; color: var(--text-secondary); }
+@keyframes emptyFadeIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+.empty-state { padding: 60px 20px; text-align: center; color: var(--text-secondary); animation: emptyFadeIn 0.5s ease-out; }
 .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
 
 /* ─ Utils ─ */
@@ -528,12 +550,18 @@ let toastTmr;
 function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
+  el.style.transition = 'none';
+  el.style.opacity = '0';
+  el.style.transform = 'translateX(-50%) translateY(20px) scale(0.92)';
+  void el.offsetWidth;
+  el.style.transition = 'opacity 0.3s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
   el.style.opacity = '1';
-  el.style.transform = 'translateX(-50%) translateY(0)';
+  el.style.transform = 'translateX(-50%) translateY(0) scale(1)';
   clearTimeout(toastTmr);
   toastTmr = setTimeout(() => {
+    el.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
     el.style.opacity = '0';
-    el.style.transform = 'translateX(-50%) translateY(20px)';
+    el.style.transform = 'translateX(-50%) translateY(12px) scale(0.95)';
   }, 2500);
 }
 
@@ -543,18 +571,19 @@ function navTo(page) {
   const oldPageEl = document.getElementById('page-' + activePage);
   const newPageEl = document.getElementById('page-' + page);
   
-  // [SUPERPOWER] iOS Motion Transition
+  // Reset scroll position on new page
+  newPageEl.scrollTop = 0;
+  
   oldPageEl.classList.add('exit');
   newPageEl.classList.remove('exit');
   
-  // Force DOM reflow to prevent glitchy jumps
   void newPageEl.offsetWidth;
   
   newPageEl.classList.add('active');
   
   setTimeout(() => {
     oldPageEl.classList.remove('active', 'exit');
-  }, 600);
+  }, 400);
 
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`[data-tab="${page}"]`).classList.add('active');
@@ -566,7 +595,6 @@ function navTo(page) {
   if (page === 'history') loadHistory();
   if (page === 'settings') loadSettings();
   
-  // [SUPERPOWER] Haptic Feedback on Tab
   tg?.HapticFeedback?.selectionChanged();
 }
 
@@ -582,6 +610,22 @@ function stopAllPolling() {
   clearInterval(homePollTmr);
 }
 
+// Animated number counter
+function animateValue(el, start, end, suffix) {
+  if (start === end) return;
+  const duration = 500;
+  const startTime = performance.now();
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start + (end - start) * eased);
+    el.textContent = current + (suffix || '');
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 async function updateHomeStats() {
   try {
     const [stats, disk] = await Promise.all([
@@ -589,10 +633,21 @@ async function updateHomeStats() {
       callApi('GET', '/api/disk')
     ]);
     
-    document.getElementById('stat-sources').textContent = stats.sources;
-    document.getElementById('stat-sent').textContent = stats.files_sent;
-    document.getElementById('stat-mb').textContent = (stats.downloaded_mb >= 1024) ? (stats.downloaded_mb / 1024).toFixed(2) + ' GB' : stats.downloaded_mb + ' MB';
-    document.getElementById('stat-hist').textContent = stats.history_count;
+    const srcEl = document.getElementById('stat-sources');
+    const sentEl = document.getElementById('stat-sent');
+    const mbEl = document.getElementById('stat-mb');
+    const histEl = document.getElementById('stat-hist');
+    
+    const oldSrc = parseInt(srcEl.textContent) || 0;
+    const oldSent = parseInt(sentEl.textContent) || 0;
+    const oldHist = parseInt(histEl.textContent) || 0;
+    
+    animateValue(srcEl, oldSrc, stats.sources);
+    animateValue(sentEl, oldSent, stats.files_sent);
+    animateValue(histEl, oldHist, stats.history_count);
+    
+    mbEl.textContent = (stats.downloaded_mb >= 1024) ? (stats.downloaded_mb / 1024).toFixed(2) + ' GB' : stats.downloaded_mb + ' MB';
+    
     document.getElementById('home-subtitle').textContent = stats.username ? `@${stats.username}`.toUpperCase() : 'DASHBOARD';
     document.getElementById('home-channel').textContent = stats.channel || 'Not configured';
     
