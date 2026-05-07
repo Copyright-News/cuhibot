@@ -6,8 +6,8 @@ abstract: "A self-hosted, production-hardened Telegram bot and Mini App for asyn
 version: "2.0.1"
 date-released: "2026-05-07"
 authors:
-  - given-names: "Nahidur"
-    family-names: "Rahman"
+  - given-names: "Mint"
+    family-names: "Frags"
     alias: "sayfalse"
   - name: "ebnycuhie"
     alias: "ebnycuhie"
