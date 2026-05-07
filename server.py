@@ -326,10 +326,25 @@ async def get_channel(uid: int = Depends(get_uid)):
     s = get_settings(uid)
     return {"channel_id": s.get("channel") or s.get("output_channel") or ""}
 
+def normalize_chat(value) -> str:
+    """Convert user-entered channel strings into valid Telegram chat IDs."""
+    v = str(value).strip()
+    if v.startswith("@"):
+        return v
+    if v.lstrip("-").isdigit():
+        n = int(v)
+        if n < 0:
+            return str(n)
+        if n > 5000000000:
+            return str(n)
+        return f"-100{n}"
+    return v
+
 @app.post("/api/channel")
 async def set_channel(body: ChannelSet, uid: int = Depends(get_uid)):
-    set_settings(uid, {"channel": body.channel_id, "output_channel": body.channel_id})
-    return {"channel_id": body.channel_id}
+    normalized = normalize_chat(body.channel_id)
+    set_settings(uid, {"channel": normalized, "output_channel": normalized})
+    return {"channel_id": normalized}
 
 # ── Schedule ──────────────────────────────────────────────────────────
 

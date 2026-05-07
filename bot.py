@@ -460,10 +460,10 @@ def _total_sent_sync(uid: int) -> int:
             s = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
         except Exception:
             s = {}
-        if "total_sent_files" in s:
-            return s["total_sent_files"]
+        if "files_sent" in s:
+            return s["files_sent"]
         count = sum(e.get("sent", 0) for e in _read_history_sync(uid))
-        s["total_sent_files"] = count
+        s["files_sent"] = count
         path.write_text(json.dumps(s, indent=2), encoding="utf-8")
         return count
 
@@ -482,7 +482,8 @@ def _add_sent_files_sync(uid: int, count: int) -> None:
             s = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
         except Exception:
             s = {}
-        s["total_sent_files"] = s.get("total_sent_files", 0) + count
+        # Mini App expects 'files_sent'
+        s["files_sent"] = s.get("files_sent", 0) + count
         path.write_text(json.dumps(s, indent=2), encoding="utf-8")
 
 async def add_sent_files(uid: int, count: int) -> None:
@@ -493,7 +494,7 @@ async def add_sent_files(uid: int, count: int) -> None:
 
 async def total_downloaded_mb(uid: int) -> float:
     s = await read_settings(uid)
-    return round(s.get("total_bytes", 0) / (1024 * 1024), 1)
+    return round(s.get("downloaded_mb", 0), 1)
 
 
 def _add_downloaded_bytes_sync(uid: int, nbytes: int) -> None:
@@ -505,7 +506,9 @@ def _add_downloaded_bytes_sync(uid: int, nbytes: int) -> None:
             s = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
         except Exception:
             s = {}
-        s["total_bytes"] = s.get("total_bytes", 0) + nbytes
+        # Mini App expects 'downloaded_mb'
+        current_mb = s.get("downloaded_mb", 0.0)
+        s["downloaded_mb"] = current_mb + (nbytes / (1024 * 1024))
         path.write_text(json.dumps(s, indent=2), encoding="utf-8")
 
 async def add_downloaded_bytes(uid: int, nbytes: int) -> None:
@@ -690,7 +693,7 @@ async def render_menu(uid: int, username: str, name: str) -> str:
     return (
         "Cuhi Bot \\- @copyrightnews\n"
         "━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "A powerful, open\\-source media forwarder & downloader that automatically delivers content from RSS feeds and social networks — including TikTok, Instagram, YouTube, Twitter, Facebook, Telegram — directly to your Telegram chats or channels.\n\n"
+        "A powerful, open\\-source media forwarder & downloader that automatically delivers content from social networks — including Instagram, TikTok, Facebook, and X (Twitter) — directly to your Telegram chats or channels.\n\n"
         "✨ Features:\n"
         "🔀 Private, channel & group forwarding modes\n"
         "🖼 Photos, videos & file delivery\n"
@@ -700,8 +703,8 @@ async def render_menu(uid: int, username: str, name: str) -> str:
         "♻️ Duplicate similarity filter\n"
         "🔖 High\\-resolution stories & highlights download\n\n"
         "❔ Getting Started\n"
-        "━ Add a data source (RSS, Instagram, TikTok, etc.)\n"
-        "━ Configure your message template and filters\n"
+        "━ Add a data source (Instagram, TikTok, etc.)\n"
+        "━ Configure your output channel and cookies\n"
         "━ Cuhi Bot will forward and download posts automatically\n"
         "🌐 Github.com/copyrightnews/cuhibot\n"
         "━━━━━━━━━━━━━━━━━━━━━━━\n"
