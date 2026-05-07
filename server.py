@@ -166,6 +166,10 @@ def read_history(uid: int, limit: int = 100) -> list[dict]:
         })
     return list(reversed(result))  # newest first
 
+def clear_history(uid: int) -> None:
+    hf = user_dir(uid) / "history.json"
+    write_json(hf, [])
+
 def get_active_cookies(uid: int) -> list[str]:
     ck_dir = user_cookies_dir(uid)
     active = []
@@ -318,6 +322,11 @@ async def delete_cookie(platform: str, uid: int = Depends(get_uid)):
 @app.get("/api/history")
 async def get_history(limit: int = 100, uid: int = Depends(get_uid)):
     return read_history(uid, min(limit, 500))
+
+@app.delete("/api/history")
+async def delete_history(uid: int = Depends(get_uid)):
+    clear_history(uid)
+    return {"ok": True, "message": "History cleared"}
 
 # ── Channel ───────────────────────────────────────────────────────────
 

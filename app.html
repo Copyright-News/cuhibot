@@ -7,6 +7,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+.emoji { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif; }
 
 :root {
   --bg: var(--tg-theme-bg-color, #000000);
@@ -340,11 +341,13 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
 
       <!-- Account Card -->
       <div class="list-group" style="margin-top:16px;">
-        <div class="cell chevron" onclick="navTo('settings')">
-          <div class="cell-icon" style="background:var(--gradient-blue); width:40px; height:40px; border-radius:50%; font-size:18px;">👤</div>
+        <div class="cell chevron" onclick="navTo('account')">
+          <div id="home-avatar" style="width:40px; height:40px; border-radius:50%; background:var(--gradient-blue); display:flex; align-items:center; justify-content:center; font-size:18px; margin-right:14px; flex-shrink:0; overflow:hidden;">
+            <span class="emoji">👤</span>
+          </div>
           <div class="cell-body">
             <div class="cell-label" id="account-name" style="font-weight:600;">User</div>
-            <div class="cell-sub" id="account-id">Tap to manage settings</div>
+            <div class="cell-sub" id="account-id">Tap to view profile</div>
           </div>
         </div>
       </div>
@@ -395,7 +398,7 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
       <div class="sec-title">Quick Settings</div>
       <div class="list-group">
         <div class="cell chevron" onclick="navTo('settings')">
-          <div class="cell-icon" style="background:var(--blue);">📡</div>
+          <div class="cell-icon" style="background:var(--blue);"><span class="emoji">📡</span></div>
           <div class="cell-body">
             <div class="cell-label">Output Channel</div>
             <div class="cell-sub" id="home-channel">Not configured</div>
@@ -489,6 +492,43 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
       <div class="nav-large-title" id="history-count">Recent Activity</div>
       <div class="list-group mt16" id="history-container">
         <!-- History rendered here -->
+      </div>
+      <div style="padding:16px;">
+        <button class="btn btn-danger" id="btn-clear-history" onclick="clearHistory()" style="display:none;">Clear All History</button>
+      </div>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div class="page" id="page-account">
+      <div class="nav-bar">
+        <div class="nav-title">Account</div>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; padding:32px 16px 8px;">
+        <div id="profile-photo" style="width:88px; height:88px; border-radius:50%; background:var(--gradient-blue); display:flex; align-items:center; justify-content:center; font-size:36px; overflow:hidden; border:3px solid var(--blue); box-shadow:0 4px 20px rgba(10,132,255,0.25);">
+          <span class="emoji">👤</span>
+        </div>
+        <div id="profile-name" style="font-size:24px; font-weight:700; margin-top:16px; letter-spacing:-0.3px;">User</div>
+        <div id="profile-username" style="font-size:16px; color:var(--blue); margin-top:4px; font-weight:500;">@username</div>
+      </div>
+
+      <div class="sec-title">Info</div>
+      <div class="list-group">
+        <div class="cell">
+          <div class="cell-body"><div class="cell-label">Telegram ID</div></div>
+          <div class="cell-right" id="profile-tid" style="font-family:monospace; font-size:14px; color:var(--text-secondary);">—</div>
+        </div>
+        <div class="cell">
+          <div class="cell-body"><div class="cell-label">Language</div></div>
+          <div class="cell-right" id="profile-lang" style="color:var(--text-secondary);">—</div>
+        </div>
+        <div class="cell">
+          <div class="cell-body"><div class="cell-label">Premium</div></div>
+          <div class="cell-right" id="profile-premium" style="color:var(--text-secondary);">No</div>
+        </div>
+      </div>
+
+      <div style="padding:24px 16px;">
+        <button class="btn btn-secondary" onclick="navTo('home')"><span class="emoji" style="margin-right:6px;">←</span> Back to Home</button>
       </div>
     </div>
 
@@ -642,6 +682,34 @@ function setTheme(mode) {
   if (sel) sel.value = saved;
 })();
 
+// Populate account from Telegram user data
+function populateAccount() {
+  const u = tg?.initDataUnsafe?.user;
+  if (!u) return;
+  const fullName = [u.first_name, u.last_name].filter(Boolean).join(' ');
+  document.getElementById('account-name').textContent = fullName || 'User';
+  document.getElementById('account-id').textContent = u.username ? '@' + u.username : 'Tap to view profile';
+  document.getElementById('profile-name').textContent = fullName || 'User';
+  document.getElementById('profile-username').textContent = u.username ? '@' + u.username : '';
+  document.getElementById('profile-tid').textContent = u.id || '—';
+  document.getElementById('profile-lang').textContent = (u.language_code || '—').toUpperCase();
+  document.getElementById('profile-premium').textContent = u.is_premium ? 'Yes' : 'No';
+  if (u.photo_url) {
+    const img = document.createElement('img');
+    img.src = u.photo_url;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+    img.onerror = () => img.remove();
+    document.getElementById('profile-photo').innerHTML = '';
+    document.getElementById('profile-photo').appendChild(img);
+    const homeAvatar = document.getElementById('home-avatar');
+    const hImg = img.cloneNode();
+    hImg.onerror = () => hImg.remove();
+    homeAvatar.innerHTML = '';
+    homeAvatar.appendChild(hImg);
+  }
+}
+populateAccount();
+
 async function callApi(method, path, body) {
   const res = await fetch(API_BASE + path, {
     method,
@@ -695,7 +763,8 @@ function navTo(page) {
   }, 400);
 
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelector(`[data-tab="${page}"]`).classList.add('active');
+  const tabEl = document.querySelector(`[data-tab="${page}"]`);
+  if (tabEl) tabEl.classList.add('active');
   
   activePage = page;
   stopAllPolling();
@@ -703,6 +772,7 @@ function navTo(page) {
   if (page === 'sources') loadSources();
   if (page === 'history') loadHistory();
   if (page === 'settings') loadSettings();
+  if (page === 'account') populateAccount();
   
   tg?.HapticFeedback?.selectionChanged();
 }
@@ -856,21 +926,32 @@ async function stopDownload() {
 
 async function loadHistory() {
   const container = document.getElementById('history-container');
+  const clearBtn = document.getElementById('btn-clear-history');
   try {
     const history = await callApi('GET', '/api/history?limit=50');
     document.getElementById('history-count').textContent = `${history.length} Entries`;
+    clearBtn.style.display = history.length > 0 ? 'flex' : 'none';
     if (history.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><div>No history available</div></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon"><span class="emoji">\ud83d\udcdc</span></div><div>No history available</div></div>';
       return;
     }
     container.innerHTML = history.map(h => `
       <div class="cell">
         <div class="cell-body">
           <div class="cell-label" style="font-size:16px; font-weight:500;">${h.source || 'Unknown'}</div>
-          <div class="cell-sub">${h.platform.charAt(0).toUpperCase() + h.platform.slice(1)} • <span style="color:var(--green)">${h.sent || 0} files</span> • ${h.date || ''}</div>
+          <div class="cell-sub">${h.platform.charAt(0).toUpperCase() + h.platform.slice(1)} \u2022 <span style="color:var(--green)">${h.sent || 0} files</span> \u2022 ${h.date || ''}</div>
         </div>
       </div>
     `).join('');
+  } catch(e) { showToast(e.message); }
+}
+
+async function clearHistory() {
+  try {
+    await callApi('DELETE', '/api/history');
+    showToast('History cleared');
+    tg?.HapticFeedback?.notificationOccurred('success');
+    loadHistory();
   } catch(e) { showToast(e.message); }
 }
 
