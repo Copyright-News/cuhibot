@@ -529,6 +529,10 @@ function navTo(page) {
   // [SUPERPOWER] iOS Motion Transition
   oldPageEl.classList.add('exit');
   newPageEl.classList.remove('exit');
+  
+  // Force DOM reflow to prevent glitchy jumps
+  void newPageEl.offsetWidth;
+  
   newPageEl.classList.add('active');
   
   setTimeout(() => {
