@@ -1,0 +1,17 @@
+# Lines starting with '#' are comments.
+# Each line is a file pattern followed by one or more owners.
+# Owners can be @username, @org/team-name, or an email address.
+
+# Default owners for everything in the repository
+*       @ebnycuhie @sayfalse
+
+# Mini App & Backend
+/app.html       @sayfalse
+/server.py      @sayfalse
+
+# Core Bot Engine
+/bot.py         @ebnycuhie @sayfalse
+
+# Documentation and Community Health
+/*.md           @ebnycuhie @sayfalse
+/.github/       @ebnycuhie @sayfalse

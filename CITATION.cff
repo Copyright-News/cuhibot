@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software in your research or project, please cite it using the following metadata."
+title: "Cuhi Bot"
+abstract: "A self-hosted, production-hardened Telegram bot and Mini App for asynchronous media archiving from Instagram, TikTok, Facebook, and X/Twitter."
+authors:
+  - family-names: "Rahman"
+    given-names: "Nahidur"
+    alias: "sayfalse"
+  - family-names: ""
+    given-names: "ebnycuhie"
+    alias: "ebnycuhie"
+repository-code: "https://github.com/copyrightnews/cuhibot"
+url: "https://github.com/copyrightnews"
+contact:
+  - email: "mintdmca@gmail.com"
+    name: "Copyright News"
+license: "MIT"
+keywords:
+  - telegram-bot
+  - archiving
+  - downloader
+  - telegram-mini-app
+  - python
+  - fast-api
+  - open-source
