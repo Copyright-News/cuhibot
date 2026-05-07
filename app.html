@@ -2,291 +2,210 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
 <title>Cuhi</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 
 :root {
-  --bg:    #000;
-  --bg2:   #1c1c1e;
-  --bg3:   #2c2c2e;
-  --bg4:   #3a3a3c;
-  --text:  #fff;
-  --text2: rgba(255,255,255,.55);
-  --text3: rgba(255,255,255,.25);
-  --sep:   rgba(255,255,255,.08);
-  --blue:  #0a84ff;
-  --green: #30d158;
-  --red:   #ff453a;
-  --org:   #ff9f0a;
-  --purp:  #bf5af2;
-  --teal:  #40c8e0;
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --tab-h:  82px;
-  --r-xl:   20px;
-  --r-lg:   16px;
-  --r-md:   12px;
-  --r-sm:   8px;
-  --font:   -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  --mono:   'SF Mono', 'Fira Code', monospace;
+  --bg: var(--tg-theme-bg-color, #000000);
+  --bg-secondary: var(--tg-theme-secondary-bg-color, #1c1c1e);
+  --bg-tertiary:  #2c2c2e;
+  --bg-grouped:   var(--tg-theme-secondary-bg-color, #1c1c1e);
+  --text:         var(--tg-theme-text-color, #ffffff);
+  --text-secondary: var(--tg-theme-hint-color, rgba(235, 235, 245, 0.6));
+  --text-tertiary:  rgba(235, 235, 245, 0.3);
+  --separator:    rgba(84, 84, 88, 0.65);
+  --blue:         #0a84ff;
+  --green:        #30d158;
+  --red:          #ff453a;
+  --orange:       #ff9f0a;
+  --purple:       #bf5af2;
+  --teal:         #64d2ff;
+  --safe-bottom:  env(safe-area-inset-bottom, 0px);
+  --tab-height:   84px;
+  --radius:       12px;
+  --radius-lg:    16px;
+  --font:         -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
 }
 
 html, body {
   height: 100%; background: var(--bg);
   color: var(--text); font-family: var(--font);
-  -webkit-font-smoothing: antialiased; overflow: hidden;
+  overflow: hidden; touch-action: manipulation;
 }
 
-/* ─ Shell ─ */
 #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 #pages { flex: 1; position: relative; overflow: hidden; }
 
 .page {
   position: absolute; inset: 0; overflow-y: auto;
   overscroll-behavior: contain;
-  padding-bottom: calc(var(--tab-h) + 8px);
-  opacity: 0; transform: translateY(8px);
-  transition: opacity .2s ease, transform .2s ease;
+  padding-bottom: calc(var(--tab-height) + 20px);
+  opacity: 0; transform: scale(0.98);
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   -webkit-overflow-scrolling: touch;
 }
-.page.active { opacity: 1; transform: none; pointer-events: all; }
+.page.active { opacity: 1; transform: scale(1); pointer-events: all; }
 
-/* ─ Page header ─ */
-.ph {
-  position: sticky; top: 0; z-index: 10;
-  padding: 16px 20px 12px;
-  background: rgba(0,0,0,.85);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: .5px solid var(--sep);
+/* ─ Navigation Bar ─ */
+.nav-bar {
+  position: sticky; top: 0; z-index: 100;
+  padding: 16px 16px 8px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
-.ph-title { font-size: 28px; font-weight: 700; letter-spacing: -.5px; line-height: 1.1; }
-.ph-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.nav-title { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+.nav-subtitle { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; margin-bottom: 2px; }
 
-/* ─ Section ─ */
-.sec { padding: 0 16px; margin-top: 22px; }
-.sec-lbl {
-  font-size: 12px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .7px;
-  color: var(--text2); padding: 0 4px; margin-bottom: 7px;
+/* ─ Grouped List Styling ─ */
+.sec-title {
+  padding: 0 32px 8px; margin-top: 24px;
+  font-size: 13px; color: var(--text-secondary);
+  text-transform: uppercase; font-weight: 400; letter-spacing: 0.2px;
+}
+.sec-footer {
+  padding: 8px 32px 0;
+  font-size: 13px; color: var(--text-secondary);
 }
 
-/* ─ Card / Cell ─ */
-.card { background: var(--bg2); border-radius: var(--r-xl); overflow: hidden; }
-.card-pad { padding: 14px 16px; }
+.list-group {
+  margin: 0 16px;
+  background: var(--bg-grouped);
+  border-radius: 12px;
+  overflow: hidden;
+}
 
 .cell {
   display: flex; align-items: center;
-  padding: 12px 16px; gap: 12px; min-height: 50px;
+  padding: 12px 16px; min-height: 44px;
   position: relative;
+  background: var(--bg-grouped);
+  transition: background 0.2s;
 }
-.cell + .cell::before {
-  content: ''; position: absolute;
-  top: 0; left: 56px; right: 0;
-  height: .5px; background: var(--sep);
+.cell:active { background: var(--bg-tertiary); }
+.cell + .cell::after {
+  content: ''; position: absolute; top: 0; left: 16px; right: 0;
+  height: 0.5px; background: var(--separator);
 }
 .cell-icon {
-  width: 32px; height: 32px; border-radius: 8px;
+  width: 30px; height: 30px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 17px; flex-shrink: 0;
+  font-size: 16px; margin-right: 14px; flex-shrink: 0;
 }
 .cell-body { flex: 1; min-width: 0; }
-.cell-title { font-size: 16px; }
-.cell-sub { font-size: 12px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cell-right { color: var(--text2); font-size: 15px; flex-shrink: 0; }
-.chevron::after { content: '›'; font-size: 20px; color: var(--text3); }
+.cell-label { font-size: 17px; font-weight: 400; color: var(--text); }
+.cell-sub { font-size: 14px; color: var(--text-secondary); margin-top: 2px; }
+.cell-right { margin-left: 8px; color: var(--text-secondary); font-size: 17px; }
+.chevron::after {
+  content: '\203A'; font-size: 20px; color: var(--text-tertiary);
+  margin-left: 8px; font-weight: 500;
+}
 
-/* ─ Stat grid ─ */
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stat-card { background: var(--bg2); border-radius: var(--r-xl); padding: 16px; }
-.stat-val {
-  font-size: 34px; font-weight: 700;
-  letter-spacing: -1.5px; line-height: 1;
-  margin-bottom: 4px;
+/* ─ Stats ─ */
+.stat-cards {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; padding: 0 16px; margin-top: 16px;
 }
-.stat-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); }
-.c-blue   { color: var(--blue); }
-.c-green  { color: var(--green); }
-.c-orange { color: var(--org); }
-.c-purple { color: var(--purp); }
+.stat-card {
+  background: var(--bg-secondary);
+  padding: 16px; border-radius: 16px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.stat-val { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
+.stat-lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); }
 
-/* ─ Disk ─ */
-.disk-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-.disk-lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text2); }
-.disk-num { font-size: 12px; color: var(--text2); font-variant-numeric: tabular-nums; }
-.disk-track { height: 8px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
-.disk-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--blue), var(--teal)); transition: width .7s cubic-bezier(.4,0,.2,1); }
-.disk-fill.warn { background: linear-gradient(90deg, var(--org), var(--red)); }
-.disk-sub { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-top: 6px; }
-
-/* ─ Banner ─ */
-.banner {
-  display: none; align-items: center; gap: 12px;
-  background: rgba(48,209,88,.1);
-  border: .5px solid rgba(48,209,88,.3);
-  border-radius: var(--r-xl); padding: 14px 16px;
-}
-.banner.show { display: flex; }
-.pulse {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--green); flex-shrink: 0;
-  animation: pulse-anim 1.5s ease-in-out infinite;
-}
-@keyframes pulse-anim {
-  0%,100% { box-shadow: 0 0 0 0 rgba(48,209,88,.5); }
-  50%      { box-shadow: 0 0 0 8px rgba(48,209,88,0); }
-}
-.banner-body { flex: 1; }
-.banner-title { font-size: 14px; font-weight: 600; color: var(--green); }
-.banner-sub   { font-size: 12px; color: var(--text2); margin-top: 1px; }
+/* ─ Progress/Disk ─ */
+.disk-card { margin: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+.disk-meta { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+.progress-track { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; background: var(--blue); transition: width 0.5s ease; }
+.progress-fill.warn { background: var(--orange); }
 
 /* ─ Buttons ─ */
 .btn {
-  display: flex; align-items: center; justify-content: center; gap: 7px;
-  width: 100%; padding: 15px 20px; border-radius: var(--r-xl);
-  border: none; cursor: pointer;
-  font-family: var(--font); font-size: 16px; font-weight: 600;
-  transition: opacity .12s, transform .1s;
-  -webkit-tap-highlight-color: transparent; letter-spacing: -.1px;
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 14px; border-radius: 14px;
+  border: none; cursor: pointer; font-size: 17px; font-weight: 600;
+  transition: opacity 0.2s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
 }
-.btn:active { opacity: .75; transform: scale(.97); }
-.btn-blue  { background: var(--blue);  color: #fff; }
-.btn-green { background: var(--green); color: #fff; }
-.btn-red   { background: rgba(255,69,58,.14); color: var(--red); }
-.btn-ghost { background: var(--bg2); color: var(--text); }
-.btn-sm { padding: 9px 18px; font-size: 14px; border-radius: var(--r-lg); width: auto; }
-.btn + .btn { margin-top: 8px; }
+.btn:active { opacity: 0.7; transform: scale(0.98); }
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-secondary { background: var(--bg-tertiary); color: var(--blue); }
+.btn-danger { background: rgba(255, 69, 58, 0.15); color: var(--red); }
+.btn-sm { padding: 8px 16px; font-size: 15px; width: auto; border-radius: 10px; }
 
-/* ─ Input ─ */
-.inp {
-  width: 100%; background: var(--bg3); border: none; outline: none;
-  border-radius: var(--r-md); padding: 13px 14px;
-  font-family: var(--font); font-size: 16px; color: var(--text);
-  -webkit-appearance: none;
-}
-.inp::placeholder { color: var(--text3); }
-textarea.inp { resize: none; min-height: 96px; font-family: var(--mono); font-size: 12px; }
-.inp-row { display: flex; gap: 8px; align-items: center; }
-.inp-row .inp { flex: 1; }
-
-/* ─ Segmented ─ */
-.seg { display: flex; background: var(--bg3); border-radius: var(--r-sm); padding: 2px; gap: 2px; }
-.seg-btn {
-  flex: 1; padding: 7px 4px; background: none; border: none; cursor: pointer;
-  font-family: var(--font); font-size: 12px; font-weight: 500;
-  color: var(--text2); border-radius: 6px;
-  transition: background .12s, color .12s;
-  -webkit-tap-highlight-color: transparent; white-space: nowrap;
-}
-.seg-btn.active { background: var(--bg4); color: var(--text); font-weight: 600; }
-
-/* ─ Toggle ─ */
-.tog { position: relative; width: 51px; height: 31px; flex-shrink: 0; }
-.tog input { opacity: 0; width: 0; height: 0; }
-.tog-track {
-  position: absolute; inset: 0; background: var(--bg4);
-  border-radius: 16px; transition: background .2s; cursor: pointer;
-}
-.tog-track::before {
-  content: ''; position: absolute;
-  width: 27px; height: 27px; left: 2px; top: 2px;
-  background: #fff; border-radius: 50%;
-  transition: transform .2s cubic-bezier(.4,0,.2,1);
-  box-shadow: 0 2px 5px rgba(0,0,0,.3);
-}
-.tog input:checked + .tog-track { background: var(--green); }
-.tog input:checked + .tog-track::before { transform: translateX(20px); }
-
-/* ─ Badge ─ */
-.bdg {
-  display: inline-flex; align-items: center;
-  padding: 3px 9px; border-radius: 100px;
-  font-size: 11px; font-weight: 700; flex-shrink: 0;
-}
-.bdg-ig  { background: rgba(225,48,108,.2); color: #e1306c; }
-.bdg-tt  { background: rgba(255,255,255,.1); color: var(--text); }
-.bdg-fb  { background: rgba(66,103,178,.2); color: #4a7bd8; }
-.bdg-x   { background: rgba(255,255,255,.08); color: var(--text2); }
-.bdg-unk { background: var(--bg3); color: var(--text2); }
-.bdg-grn { background: rgba(48,209,88,.15); color: var(--green); }
-.bdg-gry { background: var(--bg3); color: var(--text2); }
-
-/* ─ Tab bar ─ */
+/* ─ Tab Bar ─ */
 #tabbar {
-  height: calc(var(--tab-h));
-  padding-bottom: var(--safe-b);
-  background: rgba(16,16,16,.92);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border-top: .5px solid var(--sep);
-  display: flex; flex-shrink: 0;
+  height: var(--tab-height);
+  padding-bottom: var(--safe-bottom);
+  background: rgba(20, 20, 20, 0.85);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-top: 0.5px solid var(--separator);
+  display: flex;
 }
 .tab {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 3px; padding-top: 8px;
+  color: var(--text-secondary); transition: color 0.2s;
   background: none; border: none; cursor: pointer;
-  color: var(--text2); font-size: 10px; font-family: var(--font);
-  -webkit-tap-highlight-color: transparent; transition: color .15s;
 }
 .tab.active { color: var(--blue); }
-.tab svg { width: 24px; height: 24px; }
-.tab-lbl { font-weight: 500; letter-spacing: .1px; }
+.tab svg { width: 24px; height: 24px; margin-bottom: 4px; }
+.tab-label { font-size: 10px; font-weight: 500; }
 
-/* ─ Toast ─ */
-#toast {
-  position: fixed;
-  bottom: calc(var(--tab-h) + 12px); left: 50%;
-  transform: translateX(-50%) translateY(16px);
-  background: rgba(36,36,36,.96);
-  backdrop-filter: blur(20px);
-  color: #fff; padding: 10px 20px; border-radius: 100px;
-  font-size: 14px; font-weight: 500;
-  opacity: 0; transition: opacity .2s, transform .2s;
-  pointer-events: none; white-space: nowrap; z-index: 9999;
-  border: .5px solid rgba(255,255,255,.1);
+/* ─ Inputs ─ */
+.input-field {
+  width: 100%; background: transparent; border: none;
+  padding: 12px 16px; font-size: 17px; color: var(--text);
+  outline: none; font-family: var(--font);
 }
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.input-field::placeholder { color: var(--text-tertiary); }
 
-/* ─ Gate ─ */
-#gate {
-  display: none; position: fixed; inset: 0; z-index: 9999;
-  background: var(--bg); flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 18px; padding: 40px; text-align: center;
-}
-#gate.show { display: flex; }
-.gate-ico { font-size: 60px; }
-.gate-ttl { font-size: 24px; font-weight: 700; letter-spacing: -.4px; }
-.gate-sub { font-size: 15px; color: var(--text2); line-height: 1.5; }
-
-/* ─ Empty ─ */
-.empty { padding: 44px 20px; text-align: center; }
-.empty-ico { font-size: 42px; margin-bottom: 12px; }
-.empty-ttl { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
-.empty-sub { font-size: 14px; color: var(--text2); }
-
-/* ─ Utils ─ */
-.mt8  { margin-top: 8px; }
-.mt10 { margin-top: 10px; }
-.mt12 { margin-top: 12px; }
-.del-btn {
-  background: none; border: none; cursor: pointer;
-  color: var(--red); font-size: 22px; line-height: 1;
-  padding: 2px 6px; flex-shrink: 0;
+/* ─ iOS Explicit Remove Button ─ */
+.remove-btn {
+  background: var(--red); color: white;
+  border: none; padding: 6px 14px;
+  border-radius: 8px; font-weight: 600; font-size: 14px;
+  cursor: pointer; transition: opacity 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
+.remove-btn:active { opacity: 0.7; }
+
+/* ─ Banner ─ */
+.banner {
+  margin: 16px; padding: 14px 16px; background: rgba(48, 209, 88, 0.15);
+  border-radius: 14px; display: none; align-items: center; gap: 14px;
+}
+.banner.show { display: flex; }
+.dot { width: 10px; height: 10px; background: var(--green); border-radius: 50%; animation: blink 1.5s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ─ Empty State ─ */
+.empty-state { padding: 60px 20px; text-align: center; color: var(--text-secondary); }
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+
+/* ─ Utils ─ */
+.c-blue { color: var(--blue); }
+.c-green { color: var(--green); }
+.c-orange { color: var(--orange); }
+.c-purple { color: var(--purple); }
+.mt16 { margin-top: 16px; }
+.mb24 { margin-bottom: 24px; }
 </style>
 </head>
 <body>
 
-<div id="gate">
-  <div class="gate-ico">📱</div>
-  <div class="gate-ttl">Open in Telegram</div>
-  <div class="gate-sub">This panel only works inside Telegram.<br>Open it via @cuhibot to access your data.</div>
+<div id="gate" style="display:none; position:fixed; inset:0; background:#000; z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center;">
+  <div style="font-size:64px; margin-bottom:20px;">📱</div>
+  <h1 style="font-size:24px; font-weight:700; margin-bottom:10px;">Telegram Required</h1>
+  <p style="color:rgba(255,255,255,0.6); font-size:16px;">This dashboard is only accessible within the Telegram app via @cuhibot.</p>
 </div>
 
 <div id="app">
@@ -294,56 +213,68 @@ textarea.inp { resize: none; min-height: 96px; font-family: var(--mono); font-si
 
     <!-- HOME -->
     <div class="page active" id="page-home">
-      <div class="ph">
-        <div class="ph-title">Cuhi Bot</div>
-        <div class="ph-sub" id="home-sub">Your dashboard</div>
+      <div class="nav-bar">
+        <div class="nav-subtitle" id="home-subtitle">DASHBOARD</div>
+        <div class="nav-title">Cuhi</div>
       </div>
 
-      <div class="sec">
-        <div class="banner" id="dl-banner">
-          <div class="pulse"></div>
-          <div class="banner-body">
-            <div class="banner-title">Downloading…</div>
-            <div class="banner-sub">gallery-dl is running in background</div>
-          </div>
-          <button class="btn btn-red btn-sm" onclick="stopDownload()">Stop</button>
+      <div class="banner" id="active-download-banner">
+        <div class="dot"></div>
+        <div style="flex:1;">
+          <div style="font-size:15px; font-weight:600; color:var(--green);">Download in Progress</div>
+          <div style="font-size:13px; color:var(--text-secondary);">System is active in background</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="stopDownload()">Stop</button>
+      </div>
+
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="stat-lbl">Sources</div>
+          <div class="stat-val c-blue" id="stat-sources">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Files Sent</div>
+          <div class="stat-val c-green" id="stat-sent">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Data Used</div>
+          <div class="stat-val c-orange" id="stat-mb">0 MB</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">History</div>
+          <div class="stat-val c-purple" id="stat-hist">0</div>
         </div>
       </div>
 
-      <div class="sec">
-        <div class="stat-grid">
-          <div class="stat-card"><div class="stat-val c-blue"  id="s-sources">–</div><div class="stat-lbl">Sources</div></div>
-          <div class="stat-card"><div class="stat-val c-green" id="s-sent">–</div><div class="stat-lbl">Files Sent</div></div>
-          <div class="stat-card"><div class="stat-val c-orange" id="s-mb">–</div><div class="stat-lbl">Downloaded MB</div></div>
-          <div class="stat-card"><div class="stat-val c-purple" id="s-hist">–</div><div class="stat-lbl">History</div></div>
+      <div class="sec-title">Disk Storage</div>
+      <div class="disk-card">
+        <div class="disk-meta">
+          <span id="disk-label">System Storage</span>
+          <span id="disk-percent" class="c-blue">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="disk-bar" style="width:0%"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:12px; color:var(--text-secondary);">
+          <span id="disk-used">0 GB used</span>
+          <span id="disk-free">0 GB free</span>
         </div>
       </div>
 
-      <div class="sec">
-        <div class="card card-pad">
-          <div class="disk-hdr">
-            <div class="disk-lbl">Disk Usage</div>
-            <div class="disk-num" id="disk-pct">–</div>
-          </div>
-          <div class="disk-track"><div class="disk-fill" id="disk-fill" style="width:0%"></div></div>
-          <div class="disk-sub">
-            <span id="disk-used">– used</span>
-            <span id="disk-free">– free</span>
+      <div class="sec-title">Quick Settings</div>
+      <div class="list-group">
+        <div class="cell chevron" onclick="navTo('settings')">
+          <div class="cell-icon" style="background:var(--blue);">📡</div>
+          <div class="cell-body">
+            <div class="cell-label">Output Channel</div>
+            <div class="cell-sub" id="home-channel">Not configured</div>
           </div>
         </div>
-      </div>
-
-      <div class="sec">
-        <div class="sec-lbl">Cookies Active</div>
-        <div class="card"><div class="cell" id="cookies-row"><div class="cell-body"><div class="cell-title" style="color:var(--text2)">Loading…</div></div></div></div>
-      </div>
-
-      <div class="sec">
-        <div class="sec-lbl">Output Channel</div>
-        <div class="card">
-          <div class="cell">
-            <div class="cell-icon" style="background:rgba(10,132,255,.18)">📡</div>
-            <div class="cell-body"><div class="cell-title" id="home-ch" style="font-size:15px">Not set</div></div>
+        <div class="cell">
+          <div class="cell-icon" style="background:var(--purple);">🍪</div>
+          <div class="cell-body">
+            <div class="cell-label">Cookies Active</div>
+            <div id="home-cookies" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;"></div>
           </div>
         </div>
       </div>
@@ -351,132 +282,135 @@ textarea.inp { resize: none; min-height: 96px; font-family: var(--mono); font-si
 
     <!-- SOURCES -->
     <div class="page" id="page-sources">
-      <div class="ph">
-        <div class="ph-title">Sources</div>
-        <div class="ph-sub" id="src-count">0 profiles</div>
+      <div class="nav-bar">
+        <div class="nav-subtitle" id="sources-subtitle">0 PROFILES</div>
+        <div class="nav-title">Sources</div>
       </div>
-      <div class="sec">
-        <div class="sec-lbl">Add source</div>
-        <div class="card card-pad">
-          <div class="seg mt10" id="add-plat" style="margin-bottom:10px;margin-top:0">
-            <button class="seg-btn active" data-val="instagram" onclick="setSeg(this,'add-plat')">Instagram</button>
-            <button class="seg-btn" data-val="tiktok"    onclick="setSeg(this,'add-plat')">TikTok</button>
-            <button class="seg-btn" data-val="facebook"  onclick="setSeg(this,'add-plat')">Facebook</button>
-            <button class="seg-btn" data-val="x"         onclick="setSeg(this,'add-plat')">X</button>
-          </div>
-          <div class="inp-row">
-            <input class="inp" id="src-url" placeholder="Profile URL" type="url" autocomplete="off">
-            <button class="btn btn-blue btn-sm" onclick="addSource()">Add</button>
-          </div>
+
+      <div class="sec-title">Add New Source</div>
+      <div class="list-group">
+        <div class="cell" style="padding: 0;">
+          <select id="add-platform" class="input-field" style="width: 120px; background: var(--bg-tertiary); margin: 8px; border-radius: 8px; height: 36px; padding: 0 10px; font-size: 15px;">
+            <option value="instagram">Instagram</option>
+            <option value="tiktok">TikTok</option>
+            <option value="facebook">Facebook</option>
+            <option value="x">X / Twitter</option>
+          </select>
+          <input type="url" id="source-url" class="input-field" placeholder="https://..." style="flex:1;">
+          <button class="btn btn-primary btn-sm" onclick="addSource()" style="margin: 8px;">Add</button>
         </div>
       </div>
-      <div class="sec">
-        <div class="sec-lbl">All sources</div>
-        <div class="card" id="sources-list">
-          <div class="empty"><div class="empty-ico">🔗</div><div class="empty-ttl">No sources</div><div class="empty-sub">Add a profile above</div></div>
-        </div>
+
+      <div class="sec-title">Manage Sources</div>
+      <div class="list-group" id="sources-list-container">
+        <!-- Sources rendered here -->
       </div>
     </div>
 
     <!-- DOWNLOAD -->
     <div class="page" id="page-download">
-      <div class="ph"><div class="ph-title">Download</div></div>
-      <div class="sec">
-        <div class="sec-lbl">Media type</div>
-        <div class="seg" id="mt-seg">
-          <button class="seg-btn active" data-val="all"    onclick="setSeg(this,'mt-seg')">Both</button>
-          <button class="seg-btn" data-val="photos"        onclick="setSeg(this,'mt-seg')">Photos</button>
-          <button class="seg-btn" data-val="videos"        onclick="setSeg(this,'mt-seg')">Videos</button>
-          <button class="seg-btn" data-val="files"         onclick="setSeg(this,'mt-seg')">As Files</button>
+      <div class="nav-bar">
+        <div class="nav-subtitle">ACTIONS</div>
+        <div class="nav-title">Download</div>
+      </div>
+
+      <div class="sec-title">Media Selection</div>
+      <div class="list-group">
+        <div class="cell">
+          <div class="cell-body">
+            <div class="cell-label">Download Type</div>
+          </div>
+          <select id="dl-media-type" class="input-field" style="width: auto; text-align: right; color: var(--blue); font-weight: 500;">
+            <option value="all">Photos & Videos</option>
+            <option value="photos">Photos Only</option>
+            <option value="videos">Videos Only</option>
+            <option value="files">Files (Documents)</option>
+          </select>
         </div>
       </div>
-      <div class="sec">
-        <div class="sec-lbl">Options</div>
-        <div class="card">
-          <div class="cell">
-            <div class="cell-icon" style="background:rgba(48,209,88,.18)">📖</div>
-            <div class="cell-body"><div class="cell-title">Include Stories</div></div>
-            <label class="tog"><input type="checkbox" id="opt-stories"><span class="tog-track"></span></label>
+
+      <div class="sec-title">Options</div>
+      <div class="list-group">
+        <div class="cell">
+          <div class="cell-icon" style="background:var(--orange);">📖</div>
+          <div class="cell-body"><div class="cell-label">Include Stories</div></div>
+          <label class="ios-switch"><input type="checkbox" id="dl-stories"><span></span></label>
+        </div>
+        <div class="cell">
+          <div class="cell-icon" style="background:var(--purple);">✨</div>
+          <div class="cell-body"><div class="cell-label">Include Highlights</div></div>
+          <label class="ios-switch"><input type="checkbox" id="dl-highlights"><span></span></label>
+        </div>
+        <div class="cell">
+          <div class="cell-icon" style="background:var(--red);">🔄</div>
+          <div class="cell-body">
+            <div class="cell-label">Force Refresh</div>
+            <div class="cell-sub">Bypass archive, re-download all</div>
           </div>
-          <div class="cell">
-            <div class="cell-icon" style="background:rgba(191,90,242,.18)">⭐</div>
-            <div class="cell-body"><div class="cell-title">Include Highlights</div></div>
-            <label class="tog"><input type="checkbox" id="opt-highlights"><span class="tog-track"></span></label>
-          </div>
-          <div class="cell">
-            <div class="cell-icon" style="background:rgba(255,69,58,.18)">🔄</div>
-            <div class="cell-body">
-              <div class="cell-title">Force Re-download</div>
-              <div class="cell-sub">Skips archive, re-fetches all</div>
-            </div>
-            <label class="tog"><input type="checkbox" id="opt-force"><span class="tog-track"></span></label>
-          </div>
+          <label class="ios-switch"><input type="checkbox" id="dl-force"><span></span></label>
         </div>
       </div>
-      <div class="sec">
-        <div class="card card-pad">
-          <div id="dl-status-txt" style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:12px">Ready to download</div>
-          <button class="btn btn-green" id="start-btn" onclick="startDownload()">▶ &nbsp;Start Download</button>
-          <button class="btn btn-red"   id="stop-btn"  onclick="stopDownload()" style="display:none">⏹ &nbsp;Stop Download</button>
-          <div style="font-size:12px;color:var(--text2);text-align:center;margin-top:10px">Progress appears in your bot chat</div>
-        </div>
+
+      <div style="padding: 24px 16px;">
+        <div id="dl-status-info" style="text-align:center; font-size:14px; color:var(--text-secondary); margin-bottom:16px;">System Ready</div>
+        <button class="btn btn-primary" id="btn-start-dl" onclick="startDownload()">Start Download</button>
+        <button class="btn btn-danger" id="btn-stop-dl" onclick="stopDownload()" style="display:none;">Stop Process</button>
       </div>
     </div>
 
     <!-- HISTORY -->
     <div class="page" id="page-history">
-      <div class="ph">
-        <div class="ph-title">History</div>
-        <div class="ph-sub" id="hist-count">Recent downloads</div>
+      <div class="nav-bar">
+        <div class="nav-subtitle" id="history-subtitle">RECENT ACTIVITY</div>
+        <div class="nav-title">History</div>
       </div>
-      <div class="sec">
-        <div class="card" id="history-list">
-          <div class="empty"><div class="empty-ico">📭</div><div class="empty-ttl">No history yet</div><div class="empty-sub">Downloads appear here</div></div>
-        </div>
+      <div class="list-group mt16" id="history-container">
+        <!-- History rendered here -->
       </div>
     </div>
 
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
-      <div class="ph"><div class="ph-title">Settings</div></div>
+      <div class="nav-bar">
+        <div class="nav-subtitle">PREFERENCES</div>
+        <div class="nav-title">Settings</div>
+      </div>
 
-      <div class="sec">
-        <div class="sec-lbl">Output channel</div>
-        <div class="card card-pad">
-          <input class="inp" id="ch-inp" placeholder="@channel or -100xxxxxxx" style="margin-bottom:10px">
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-blue btn-sm" onclick="saveChannel()">Save</button>
-            <button class="btn btn-ghost btn-sm" onclick="clearChannel()">Clear</button>
-          </div>
+      <div class="sec-title">Output Configuration</div>
+      <div class="list-group">
+        <div class="cell" style="padding: 4px 0;">
+          <input type="text" id="set-channel-id" class="input-field" placeholder="@channel or -100...">
+          <button class="btn btn-primary btn-sm" onclick="saveChannel()" style="margin: 8px;">Save</button>
         </div>
       </div>
+      <div class="sec-footer">Forwarded media will be sent to this channel.</div>
 
-      <div class="sec">
-        <div class="sec-lbl">Auto schedule</div>
-        <div class="card card-pad">
-          <input class="inp" id="cron-inp" placeholder="0 9 * * *  (daily at 9 AM)" style="font-family:var(--mono);font-size:14px;margin-bottom:10px">
-          <button class="btn btn-blue btn-sm" onclick="saveSchedule()">Save Schedule</button>
+      <div class="sec-title">Automation</div>
+      <div class="list-group">
+        <div class="cell" style="padding: 4px 0;">
+          <input type="text" id="set-cron" class="input-field" placeholder="0 9 * * *">
+          <button class="btn btn-primary btn-sm" onclick="saveSchedule()" style="margin: 8px;">Set</button>
         </div>
       </div>
+      <div class="sec-footer">Use Cron format (e.g., daily at 9 AM).</div>
 
-      <div class="sec">
-        <div class="sec-lbl">Cookie status</div>
-        <div class="card" id="cookie-status"></div>
+      <div class="sec-title">Cookie Management</div>
+      <div class="list-group" id="settings-cookie-status">
+        <!-- Cookie status here -->
       </div>
 
-      <div class="sec">
-        <div class="sec-lbl">Upload / delete cookie</div>
-        <div class="card card-pad">
-          <div class="seg" id="ck-plat" style="margin-bottom:12px">
-            <button class="seg-btn active" data-val="instagram" onclick="setSeg(this,'ck-plat')">IG</button>
-            <button class="seg-btn" data-val="tiktok"    onclick="setSeg(this,'ck-plat')">TT</button>
-            <button class="seg-btn" data-val="facebook"  onclick="setSeg(this,'ck-plat')">FB</button>
-            <button class="seg-btn" data-val="x"         onclick="setSeg(this,'ck-plat')">X</button>
-          </div>
-          <textarea class="inp" id="ck-data" placeholder="Paste Netscape cookie string…" style="margin-bottom:10px"></textarea>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-blue btn-sm" onclick="uploadCookie()">Upload</button>
-            <button class="btn btn-red btn-sm"  onclick="deleteCookie()">Delete</button>
+      <div class="list-group mt16">
+        <div class="cell" style="flex-direction:column; align-items:stretch; padding:16px;">
+          <select id="cookie-platform" class="input-field" style="background:var(--bg-tertiary); border-radius:10px; margin-bottom:12px;">
+            <option value="instagram">Instagram</option>
+            <option value="tiktok">TikTok</option>
+            <option value="facebook">Facebook</option>
+            <option value="x">X / Twitter</option>
+          </select>
+          <textarea id="cookie-data" class="input-field" placeholder="Paste Netscape cookie content here..." style="background:var(--bg-tertiary); border-radius:10px; min-height:120px; font-size:13px; font-family:monospace; padding:12px;"></textarea>
+          <div style="display:flex; gap:12px; margin-top:12px;">
+            <button class="btn btn-primary btn-sm" style="flex:1" onclick="uploadCookie()">Upload</button>
+            <button class="btn btn-danger btn-sm" style="flex:1" onclick="deleteCookie()">Delete</button>
           </div>
         </div>
       </div>
@@ -484,340 +418,310 @@ textarea.inp { resize: none; min-height: 96px; font-family: var(--mono); font-si
 
   </div>
 
-  <!-- Tab bar -->
+  <!-- Tab Bar -->
   <nav id="tabbar">
-    <button class="tab active" data-page="home" onclick="navTo('home')">
+    <button class="tab active" onclick="navTo('home')" data-tab="home">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      <span class="tab-lbl">Home</span>
+      <div class="tab-label">Home</div>
     </button>
-    <button class="tab" data-page="sources" onclick="navTo('sources')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      <span class="tab-lbl">Sources</span>
+    <button class="tab" onclick="navTo('sources')" data-tab="sources">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <div class="tab-label">Sources</div>
     </button>
-    <button class="tab" data-page="download" onclick="navTo('download')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      <span class="tab-lbl">Download</span>
+    <button class="tab" onclick="navTo('download')" data-tab="download">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <div class="tab-label">Download</div>
     </button>
-    <button class="tab" data-page="history" onclick="navTo('history')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      <span class="tab-lbl">History</span>
+    <button class="tab" onclick="navTo('history')" data-tab="history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div class="tab-label">History</div>
     </button>
-    <button class="tab" data-page="settings" onclick="navTo('settings')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      <span class="tab-lbl">Settings</span>
+    <button class="tab" onclick="navTo('settings')" data-tab="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <div class="tab-label">Settings</div>
     </button>
   </nav>
 </div>
 
-<div id="toast"></div>
+<div id="toast" style="position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); background:rgba(40,40,40,0.95); backdrop-filter:blur(10px); padding:12px 24px; border-radius:100px; color:#fff; font-size:15px; font-weight:500; opacity:0; transition:all 0.3s; pointer-events:none; z-index:9999; border:0.5px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></div>
+
+<style>
+.ios-switch { position: relative; width: 51px; height: 31px; flex-shrink: 0; }
+.ios-switch input { opacity: 0; width: 0; height: 0; }
+.ios-switch span {
+  position: absolute; inset: 0; background: #39393d;
+  border-radius: 16px; transition: .2s; cursor: pointer;
+}
+.ios-switch span::before {
+  content: ""; position: absolute; height: 27px; width: 27px;
+  left: 2px; bottom: 2px; background: white;
+  border-radius: 50%; transition: .2s;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+.ios-switch input:checked + span { background: #30d158; }
+.ios-switch input:checked + span::before { transform: translateX(20px); }
+</style>
 
 <script>
-// ── Init ─────────────────────────────────────────────────────────────
 const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor('#000000'); } catch{} }
+if (tg) {
+  tg.ready();
+  tg.expand();
+  try { 
+    tg.setHeaderColor('secondary_bg_color'); 
+    tg.setBackgroundColor('bg_color'); 
+  } catch(e){}
+}
 
-const INIT = tg?.initData || '';
-const BASE = window.location.origin;
+const INIT_DATA = tg?.initData || '';
+const API_BASE = window.location.origin;
 
-// Block browser access - only allow inside Telegram
-if (!INIT) {
-  document.getElementById('gate').classList.add('show');
+if (!INIT_DATA && window.location.hostname !== 'localhost') {
+  document.getElementById('gate').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
 }
 
-// ── API ───────────────────────────────────────────────────────────────
-async function api(method, path, body) {
-  const res = await fetch(BASE + path, {
+async function callApi(method, path, body) {
+  const res = await fetch(API_BASE + path, {
     method,
-    headers: { 'Content-Type': 'application/json', 'X-Init-Data': INIT },
-    body: body != null ? JSON.stringify(body) : undefined,
+    headers: { 'Content-Type': 'application/json', 'X-Init-Data': INIT_DATA },
+    body: body ? JSON.stringify(body) : undefined
   });
   if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.detail || `HTTP ${res.status}`);
+    const err = await res.json().catch(() => ({detail: 'System Error'}));
+    throw new Error(err.detail || `Error ${res.status}`);
   }
   return res.json();
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────
-let _tt;
-function toast(msg, ms=2400) {
+let toastTmr;
+function showToast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), ms);
+  el.textContent = msg;
+  el.style.opacity = '1';
+  el.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 2500);
 }
 
-// ── Seg ───────────────────────────────────────────────────────────────
-function setSeg(btn, id) {
-  document.querySelectorAll(`#${id} .seg-btn`).forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-const segVal = id => document.querySelector(`#${id} .seg-btn.active`)?.dataset.val;
-
-// ── Nav ───────────────────────────────────────────────────────────────
-const pageLoaders = { home: loadHome, sources: loadSources, history: loadHistory, settings: loadSettings };
 function navTo(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
-  document.querySelector(`.tab[data-page="${page}"]`).classList.add('active');
-  pageLoaders[page]?.();
+  document.querySelector(`[data-tab="${page}"]`).classList.add('active');
+  
+  stopAllPolling();
+  if (page === 'home') startHomePolling();
+  if (page === 'sources') loadSources();
+  if (page === 'history') loadHistory();
+  if (page === 'settings') loadSettings();
+  tg?.HapticFeedback?.selectionChanged();
 }
 
-// ── Platform ──────────────────────────────────────────────────────────
-function platBadge(p) {
-  const cls = { instagram:'bdg-ig', tiktok:'bdg-tt', facebook:'bdg-fb', x:'bdg-x' }[p] || 'bdg-unk';
-  return `<span class="bdg ${cls}">${p || '?'}</span>`;
-}
-function detectPlat(url='') {
-  if (url.includes('instagram')) return 'instagram';
-  if (url.includes('tiktok'))    return 'tiktok';
-  if (url.includes('facebook'))  return 'facebook';
-  if (url.includes('x.com') || url.includes('twitter')) return 'x';
-  return 'unknown';
+function getPlatformBadge(p) {
+  const colors = { instagram: '#e1306c', tiktok: '#000000', facebook: '#1877f2', x: '#000000' };
+  const color = colors[p] || '#8e8e93';
+  return `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${color}; margin-right:6px;"></span>`;
 }
 
-// ── Disk polling (real-time, every 5s) ───────────────────────────────
-let diskTmr;
-async function updateDisk() {
+// ── Polling Logic ────────────────────────────────────────────────────
+let homePollTmr;
+function stopAllPolling() {
+  clearInterval(homePollTmr);
+}
+
+async function updateHomeStats() {
   try {
-    const d = await api('GET', '/api/disk');
-    const fill = document.getElementById('disk-fill');
-    fill.style.width = d.percent_used + '%';
-    fill.classList.toggle('warn', d.percent_used > 80);
-    document.getElementById('disk-pct').textContent  = d.percent_used + '%';
-    document.getElementById('disk-used').textContent = d.used_gb + ' GB used';
-    document.getElementById('disk-free').textContent = d.free_gb + ' GB free';
-  } catch {}
-}
-function startDiskPoll() {
-  clearInterval(diskTmr);
-  updateDisk();
-  diskTmr = setInterval(updateDisk, 5000);
+    const [stats, disk] = await Promise.all([
+      callApi('GET', '/api/stats'),
+      callApi('GET', '/api/disk')
+    ]);
+    
+    document.getElementById('stat-sources').textContent = stats.sources;
+    document.getElementById('stat-sent').textContent = stats.files_sent;
+    document.getElementById('stat-mb').textContent = (stats.downloaded_mb >= 1024) ? (stats.downloaded_mb / 1024).toFixed(2) + ' GB' : stats.downloaded_mb + ' MB';
+    document.getElementById('stat-hist').textContent = stats.history_count;
+    document.getElementById('home-subtitle').textContent = stats.username ? `@${stats.username}`.toUpperCase() : 'DASHBOARD';
+    document.getElementById('home-channel').textContent = stats.channel || 'Not configured';
+    
+    const cookiesEl = document.getElementById('home-cookies');
+    cookiesEl.innerHTML = stats.cookies_active.map(p => `<span style="font-size:12px; background:var(--bg-tertiary); padding:4px 10px; border-radius:6px; color:var(--text); font-weight: 500;">${p.charAt(0).toUpperCase() + p.slice(1)}</span>`).join('');
+    
+    document.getElementById('active-download-banner').classList.toggle('show', stats.download_running);
+    document.getElementById('btn-start-dl').style.display = stats.download_running ? 'none' : 'flex';
+    document.getElementById('btn-stop-dl').style.display = stats.download_running ? 'flex' : 'none';
+    document.getElementById('dl-status-info').textContent = stats.download_running ? 'Download in progress...' : 'System Ready';
+
+    // Disk
+    document.getElementById('disk-percent').textContent = disk.percent_used + '%';
+    document.getElementById('disk-bar').style.width = disk.percent_used + '%';
+    document.getElementById('disk-bar').classList.toggle('warn', disk.percent_used > 85);
+    document.getElementById('disk-used').textContent = disk.used_gb + ' GB used';
+    document.getElementById('disk-free').textContent = disk.free_gb + ' GB free';
+    
+  } catch(e) { console.error('Poll error', e); }
 }
 
-// ── Download status polling ───────────────────────────────────────────
-let dlTmr;
-function setDlUi(running) {
-  document.getElementById('dl-banner').classList.toggle('show', running);
-  document.getElementById('start-btn').style.display = running ? 'none' : '';
-  document.getElementById('stop-btn').style.display  = running ? '' : 'none';
-  document.getElementById('dl-status-txt').textContent = running ? 'Download running…' : 'Ready to download';
-}
-function startDlPoll() {
-  clearInterval(dlTmr);
-  dlTmr = setInterval(async () => {
-    try {
-      const s = await api('GET', '/api/download/status');
-      setDlUi(s.running);
-      if (!s.running) { clearInterval(dlTmr); dlTmr = null; }
-    } catch {}
-  }, 3000);
+function startHomePolling() {
+  updateHomeStats();
+  homePollTmr = setInterval(updateHomeStats, 3000);
 }
 
-// ── HOME ──────────────────────────────────────────────────────────────
-async function loadHome() {
-  startDiskPoll();
-  try {
-    const s = await api('GET', '/api/stats');
-    document.getElementById('s-sources').textContent = s.sources ?? 0;
-    document.getElementById('s-sent').textContent    = s.files_sent ?? 0;
-    document.getElementById('s-mb').textContent      = s.downloaded_mb ?? 0;
-    document.getElementById('s-hist').textContent    = s.history_count ?? 0;
-    document.getElementById('home-ch').textContent   = s.channel || 'Not set — configure in Settings';
-    document.getElementById('home-sub').textContent  = s.username ? `@${s.username}` : 'Your dashboard';
-    setDlUi(s.download_running);
-    if (s.download_running) startDlPoll();
-
-    // Cookies row
-    const row = document.getElementById('cookies-row');
-    if (s.cookies_active?.length) {
-      row.innerHTML = `<div class="cell-body" style="display:flex;flex-wrap:wrap;gap:6px;padding:2px 0">${s.cookies_active.map(p => platBadge(p)).join('')}</div>`;
-    } else {
-      row.innerHTML = `<div class="cell-body"><div class="cell-title" style="color:var(--text2);font-size:15px">No cookies configured</div></div>`;
-    }
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-
-// ── SOURCES ───────────────────────────────────────────────────────────
-let allSrc = [];
+// ── Actions ──────────────────────────────────────────────────────────
 async function loadSources() {
+  const container = document.getElementById('sources-list-container');
   try {
-    allSrc = await api('GET', '/api/sources');
-    renderSrc();
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-function renderSrc() {
-  const el = document.getElementById('sources-list');
-  document.getElementById('src-count').textContent = `${allSrc.length} profile${allSrc.length !== 1 ? 's' : ''}`;
-  if (!allSrc.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-ico">🔗</div><div class="empty-ttl">No sources</div><div class="empty-sub">Add a profile above</div></div>`;
-    return;
-  }
-  el.innerHTML = allSrc.map(s => `
-    <div class="cell">
-      ${platBadge(s.platform)}
-      <div class="cell-body">
-        <div class="cell-title" style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.url}</div>
-        ${s.file_count != null ? `<div class="cell-sub">${s.file_count} files</div>` : ''}
-      </div>
-      <button class="del-btn" onclick="delSrc(${JSON.stringify(s.url)},${JSON.stringify(s.platform)})">−</button>
-    </div>
-  `).join('');
-}
-async function addSource() {
-  const url  = document.getElementById('src-url').value.trim();
-  const plat = segVal('add-plat');
-  if (!url) { toast('Enter a URL'); return; }
-  try {
-    await api('POST', '/api/sources', { url, platform: plat });
-    document.getElementById('src-url').value = '';
-    tg?.HapticFeedback?.notificationOccurred('success');
-    toast('✓ Added');
-    loadSources();
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-async function delSrc(url, platform) {
-  try {
-    await api('DELETE', `/api/sources/${platform}/${encodeURIComponent(url)}`);
-    tg?.HapticFeedback?.notificationOccurred('warning');
-    toast('Removed');
-    loadSources();
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-
-// ── DOWNLOAD ──────────────────────────────────────────────────────────
-async function startDownload() {
-  try {
-    await api('POST', '/api/download', {
-      media_type: segVal('mt-seg'),
-      stories:    document.getElementById('opt-stories').checked,
-      highlights: document.getElementById('opt-highlights').checked,
-      force:      document.getElementById('opt-force').checked,
-    });
-    toast('⬇ Download started');
-    tg?.HapticFeedback?.notificationOccurred('success');
-    setDlUi(true); startDlPoll();
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-async function stopDownload() {
-  try {
-    await api('POST', '/api/download/stop');
-    setDlUi(false); clearInterval(dlTmr); dlTmr = null;
-    tg?.HapticFeedback?.notificationOccurred('warning');
-    toast('⏹ Stopped');
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-
-// ── HISTORY ───────────────────────────────────────────────────────────
-async function loadHistory() {
-  const el = document.getElementById('history-list');
-  try {
-    const rows = await api('GET', '/api/history?limit=100');
-    document.getElementById('hist-count').textContent = rows.length + ' entries';
-    if (!rows.length) {
-      el.innerHTML = `<div class="empty"><div class="empty-ico">📭</div><div class="empty-ttl">No history yet</div><div class="empty-sub">Downloads appear here</div></div>`;
+    const sources = await callApi('GET', '/api/sources');
+    document.getElementById('sources-subtitle').textContent = `${sources.length} PROFILE${sources.length === 1 ? '' : 'S'}`;
+    if (sources.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔗</div><div>No sources added yet</div></div>';
       return;
     }
-    el.innerHTML = rows.map(r => {
-      // Handle all possible key names for source URL
-      const src  = r.user || r.source || r.url || r.profile || r.handle || r.source_url || r.account || '';
-      const file = (r.sent !== undefined) ? `${r.sent} file(s)` : (r.filename || r.file || r.name || '');
-      const raw  = r.date || r.downloaded_at || r.timestamp || r.ts || '';
-      const plat = r.platform || detectPlat(src);
-      let dateStr = raw;
-      if (raw) {
-        try {
-          const d = new Date(raw);
-          if (!isNaN(d.getTime())) {
-             dateStr = d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-          }
-        } catch {}
-      }
-      // Display: show source URL prominently, filename as sub
-      const displaySrc = src || 'Unknown source';
-      return `
-        <div class="cell">
-          ${platBadge(plat)}
-          <div class="cell-body">
-            <div class="cell-title" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${displaySrc}</div>
-            <div class="cell-sub">${file}${file && dateStr ? ' · ' : ''}${dateStr}</div>
-          </div>
+    container.innerHTML = sources.map(s => `
+      <div class="cell">
+        <div class="cell-body" style="padding-right: 12px;">
+          <div class="cell-label" style="font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 500;">${s.url}</div>
+          <div class="cell-sub" style="display:flex; align-items:center;">${getPlatformBadge(s.platform)}${s.platform.charAt(0).toUpperCase() + s.platform.slice(1)}</div>
         </div>
-      `;
-    }).join('');
-  } catch(e) { toast('⚠ ' + e.message); }
+        <button class="remove-btn" onclick="deleteSource('${s.platform}', '${encodeURIComponent(s.url)}')">Remove</button>
+      </div>
+    `).join('');
+  } catch(e) { showToast(e.message); }
 }
 
-// ── SETTINGS ──────────────────────────────────────────────────────────
+async function addSource() {
+  const url = document.getElementById('source-url').value.trim();
+  const platform = document.getElementById('add-platform').value;
+  if (!url) return showToast('Enter a URL');
+  try {
+    await callApi('POST', '/api/sources', { url, platform });
+    document.getElementById('source-url').value = '';
+    showToast('Source added');
+    loadSources();
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } catch(e) { showToast(e.message); }
+}
+
+async function deleteSource(platform, url) {
+  try {
+    await callApi('DELETE', `/api/sources/${platform}/${url}`);
+    showToast('Source Removed');
+    loadSources();
+    tg?.HapticFeedback?.notificationOccurred('warning');
+  } catch(e) { showToast(e.message); }
+}
+
+async function startDownload() {
+  try {
+    await callApi('POST', '/api/download', {
+      media_type: document.getElementById('dl-media-type').value,
+      stories: document.getElementById('dl-stories').checked,
+      highlights: document.getElementById('dl-highlights').checked,
+      force: document.getElementById('dl-force').checked
+    });
+    showToast('Download started');
+    updateHomeStats();
+    tg?.HapticFeedback?.impactOccurred('medium');
+  } catch(e) { showToast(e.message); }
+}
+
+async function stopDownload() {
+  try {
+    await callApi('POST', '/api/download/stop');
+    showToast('Stop signal sent');
+    updateHomeStats();
+    tg?.HapticFeedback?.notificationOccurred('warning');
+  } catch(e) { showToast(e.message); }
+}
+
+async function loadHistory() {
+  const container = document.getElementById('history-container');
+  try {
+    const history = await callApi('GET', '/api/history?limit=50');
+    document.getElementById('history-subtitle').textContent = `${history.length} ENTRIES`;
+    if (history.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><div>No history available</div></div>';
+      return;
+    }
+    container.innerHTML = history.map(h => `
+      <div class="cell">
+        <div class="cell-body">
+          <div class="cell-label" style="font-size:16px; font-weight:500;">${h.source || 'Unknown'}</div>
+          <div class="cell-sub">${h.platform.charAt(0).toUpperCase() + h.platform.slice(1)} • <span style="color:var(--green)">${h.sent || 0} files</span> • ${h.date || ''}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { showToast(e.message); }
+}
+
 async function loadSettings() {
   try {
     const [ch, sched, cookies] = await Promise.all([
-      api('GET', '/api/channel'),
-      api('GET', '/api/schedule'),
-      api('GET', '/api/cookies'),
+      callApi('GET', '/api/channel'),
+      callApi('GET', '/api/schedule'),
+      callApi('GET', '/api/cookies')
     ]);
-    if (ch.channel_id) document.getElementById('ch-inp').value = ch.channel_id;
-    if (sched.cron)    document.getElementById('cron-inp').value = sched.cron;
-    renderCookieStatus(cookies);
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-function renderCookieStatus(cookies) {
-  const el = document.getElementById('cookie-status');
-  const plats = ['instagram','tiktok','facebook','x'];
-  const has = new Set(cookies.map(c => c.platform));
-  el.innerHTML = plats.map(p => `
-    <div class="cell">
-      ${platBadge(p)}
-      <div class="cell-body"><div class="cell-title" style="font-size:15px">${has.has(p) ? 'Active' : 'Not set'}</div></div>
-      <span class="bdg ${has.has(p) ? 'bdg-grn' : 'bdg-gry'}">${has.has(p) ? '✓ Active' : '– Missing'}</span>
-    </div>
-  `).join('');
-}
-async function saveChannel() {
-  try {
-    await api('POST', '/api/channel', { channel_id: document.getElementById('ch-inp').value.trim() });
-    tg?.HapticFeedback?.notificationOccurred('success');
-    toast('✓ Channel saved');
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-async function clearChannel() {
-  document.getElementById('ch-inp').value = '';
-  try { await api('POST', '/api/channel', { channel_id: '' }); toast('Cleared'); } catch(e) { toast('⚠ ' + e.message); }
-}
-async function saveSchedule() {
-  const cron = document.getElementById('cron-inp').value.trim();
-  try {
-    await api('POST', '/api/schedule', { cron, enabled: !!cron });
-    tg?.HapticFeedback?.notificationOccurred('success');
-    toast(cron ? '✓ Schedule saved' : 'Schedule cleared');
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-async function uploadCookie() {
-  const data = document.getElementById('ck-data').value.trim();
-  const plat = segVal('ck-plat');
-  if (!data) { toast('Paste cookie data first'); return; }
-  try {
-    await api('POST', '/api/cookies', { platform: plat, cookie_data: data });
-    document.getElementById('ck-data').value = '';
-    tg?.HapticFeedback?.notificationOccurred('success');
-    toast(`✓ ${plat} cookie saved`);
-    const ck = await api('GET', '/api/cookies');
-    renderCookieStatus(ck);
-  } catch(e) { toast('⚠ ' + e.message); }
-}
-async function deleteCookie() {
-  const plat = segVal('ck-plat');
-  try {
-    await api('DELETE', `/api/cookies/${plat}`);
-    toast(`${plat} deleted`);
-    const ck = await api('GET', '/api/cookies');
-    renderCookieStatus(ck);
-  } catch(e) { toast('⚠ ' + e.message); }
+    document.getElementById('set-channel-id').value = ch.channel_id || '';
+    document.getElementById('set-cron').value = sched.cron || '';
+    
+    const container = document.getElementById('settings-cookie-status');
+    container.innerHTML = cookies.map(c => `
+      <div class="cell">
+        <div class="cell-body"><div class="cell-label" style="font-weight:500;">${c.platform.charAt(0).toUpperCase() + c.platform.slice(1)}</div></div>
+        <div class="cell-right" style="color:${c.has_cookie ? 'var(--green)' : 'var(--red)'}; font-size:13px; font-weight:700; padding:4px 8px; background:var(--bg-tertiary); border-radius:6px;">
+          ${c.has_cookie ? 'ACTIVE' : 'MISSING'}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { showToast(e.message); }
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────
-if (INIT) loadHome();
+async function saveChannel() {
+  const channel_id = document.getElementById('set-channel-id').value.trim();
+  try {
+    await callApi('POST', '/api/channel', { channel_id });
+    showToast('Channel updated');
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } catch(e) { showToast(e.message); }
+}
+
+async function saveSchedule() {
+  const cron = document.getElementById('set-cron').value.trim();
+  try {
+    await callApi('POST', '/api/schedule', { cron, enabled: !!cron });
+    showToast(cron ? 'Schedule set' : 'Schedule cleared');
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } catch(e) { showToast(e.message); }
+}
+
+async function uploadCookie() {
+  const platform = document.getElementById('cookie-platform').value;
+  const cookie_data = document.getElementById('cookie-data').value.trim();
+  if (!cookie_data) return showToast('Paste cookie data');
+  try {
+    await callApi('POST', '/api/cookies', { platform, cookie_data });
+    document.getElementById('cookie-data').value = '';
+    showToast(`${platform} cookie saved`);
+    loadSettings();
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } catch(e) { showToast(e.message); }
+}
+
+async function deleteCookie() {
+  const platform = document.getElementById('cookie-platform').value;
+  try {
+    await callApi('DELETE', `/api/cookies/${platform}`);
+    showToast(`${platform} cookie deleted`);
+    loadSettings();
+    tg?.HapticFeedback?.notificationOccurred('warning');
+  } catch(e) { showToast(e.message); }
+}
+
+// Boot
+startHomePolling();
 </script>
 </body>
 </html>

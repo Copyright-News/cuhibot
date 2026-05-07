@@ -256,24 +256,12 @@ def folder_mb(path: Path) -> float:
 
 
 def wipe_downloads(uid: int) -> float:
-    """Robustly delete the downloads folder and reset the session byte counters.
+    """Robustly delete the downloads folder.
     
-    [FIXED] Directly zeros counters in one atomic write instead of using large
-    negative sentinels which corrupted stored stats to deeply negative values.
+    Lifetime stats (downloaded_mb, files_sent) are preserved in settings.json.
     """
     root = udir(uid) / "downloads"
     freed = folder_mb(root)
-
-    # Directly zero both counters in one atomic write
-    path = settings_path(uid)
-    with locked_file(path):
-        try:
-            s = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-            s["total_bytes"] = 0
-            s["total_sent_files"] = 0
-            path.write_text(json.dumps(s, indent=2), encoding="utf-8")
-        except (OSError, ValueError, json.JSONDecodeError):
-            pass
 
     if root.exists():
         # Individual unlink is safer on Windows than a raw rmtree
@@ -494,7 +482,13 @@ async def add_sent_files(uid: int, count: int) -> None:
 
 async def total_downloaded_mb(uid: int) -> float:
     s = await read_settings(uid)
-    return round(s.get("downloaded_mb", 0), 1)
+    base_mb = s.get("downloaded_mb", 0.0)
+    
+    def _get_current():
+        return folder_mb(udir(uid) / "downloads")
+        
+    current_dl_mb = await asyncio.get_running_loop().run_in_executor(_IO_POOL, _get_current)
+    return round(base_mb + current_dl_mb, 1)
 
 
 def _add_downloaded_bytes_sync(uid: int, nbytes: int) -> None:
