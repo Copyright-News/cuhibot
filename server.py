@@ -155,9 +155,9 @@ def read_history(uid: int, limit: int = 100) -> list[dict]:
     for item in items[-limit:]:
         if not isinstance(item, dict):
             continue
-        # Try every possible key name for the source URL
+        # Try every possible key name for the source URL, including 'user' from bot.py
         source = (
-            item.get("source") or item.get("url") or item.get("profile") or
+            item.get("user") or item.get("source") or item.get("url") or item.get("profile") or
             item.get("handle") or item.get("source_url") or item.get("account") or ""
         )
         result.append({
