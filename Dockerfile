@@ -1,7 +1,7 @@
 # ── Base image ─────────────────────────────────────────────────────────────────
 FROM python:3.11-slim
 
-LABEL maintainer="naimurnstu" \
+LABEL maintainer="sayfalse" \
       description="Cuhi Bot — Telegram media downloader (Instagram/TikTok/Facebook/X)" \
       version="2.0.2"
 
