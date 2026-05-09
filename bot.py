@@ -1097,7 +1097,10 @@ async def realtime_download(
         nonlocal sent_count, downloaded_bytes
         if buffer and not stop.is_set():
             batch = list(buffer)
-            n = await flush(target, batch, send_as, stop)
+            if target == "android":
+                n = len(batch)
+            else:
+                n = await flush(target, batch, send_as, stop)
             if n > 0:
                 sent_count += n
                 await add_sent_files(uid, n)
@@ -2097,6 +2100,7 @@ async def _run_miniapp_download(
     mode_map = {"both": "both", "photos": "photos", "videos": "videos",
                 "files": "documents"}
     send_as = mode_map.get(mode, "both")
+    client = trigger.get("client", "telegram")
 
     # Determine which platforms to run
     platforms_to_run = list(PLATFORMS.keys())
@@ -2135,13 +2139,16 @@ async def _run_miniapp_download(
                     if stop_event.is_set():
                         break
 
-                    # Use the chat or channel as target
-                    settings = await read_settings(uid)
-                    channel = settings.get("channel")
-                    if channel:
-                        target = (bot, normalize_chat(channel))
+                    if client == "android":
+                        target = "android"
                     else:
-                        target = (bot, uid)  # DM to user
+                        # Use the chat or channel as target
+                        settings = await read_settings(uid)
+                        channel = settings.get("channel")
+                        if channel:
+                            target = (bot, normalize_chat(channel))
+                        else:
+                            target = (bot, uid)  # DM to user
 
                     sent = await realtime_download(
                         target=target,

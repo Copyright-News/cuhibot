@@ -204,6 +204,7 @@ class DownloadTrigger(BaseModel):
     force: bool = False
     stories: bool = False
     highlights: bool = False
+    client: str = "telegram"
 
 class ChannelSet(BaseModel):
     channel_id: str
@@ -392,6 +393,7 @@ async def trigger_download(body: DownloadTrigger, uid: int = Depends(get_uid)):
         "force":      body.force,
         "stories":    body.stories,
         "highlights": body.highlights,
+        "client":     body.client,
     }
     trigger_path = user_dir(uid) / "download_trigger.json"
     write_json(trigger_path, trigger)
@@ -440,6 +442,63 @@ async def disk_info(uid: int = Depends(get_uid)):
         "free_gb":     round(u.free  / 1e9, 1),
         "percent_used": pct,
     }
+
+# ── Files (For Android Native Download) ───────────────────────────────
+
+@app.get("/api/files")
+async def list_files(uid: int = Depends(get_uid)):
+    dl_dir = user_dir(uid) / "downloads"
+    if not dl_dir.exists():
+        return []
+    
+    files = []
+    for f in dl_dir.rglob("*"):
+        if f.is_file():
+            # Get path relative to the downloads folder
+            rel_path = f.relative_to(dl_dir)
+            files.append({
+                "path": str(rel_path).replace("\\", "/"),
+                "name": f.name,
+                "size": f.stat().st_size
+            })
+    return files
+
+@app.get("/api/files/{file_path:path}")
+async def get_file(file_path: str, uid: int = Depends(get_uid)):
+    dl_dir = user_dir(uid) / "downloads"
+    target = dl_dir / file_path
+    
+    # Security: prevent directory traversal
+    try:
+        target.resolve().relative_to(dl_dir.resolve())
+    except ValueError:
+        raise HTTPException(403, "Access denied")
+        
+    if not target.exists() or not target.is_file():
+        raise HTTPException(404, "File not found")
+        
+    return FileResponse(target)
+
+@app.delete("/api/files")
+async def clear_files(uid: int = Depends(get_uid)):
+    dl_dir = user_dir(uid) / "downloads"
+    if dl_dir.exists():
+        shutil.rmtree(dl_dir, ignore_errors=True)
+    return {"status": "cleared"}
+
+@app.delete("/api/files/{file_path:path}")
+async def delete_file(file_path: str, uid: int = Depends(get_uid)):
+    dl_dir = user_dir(uid) / "downloads"
+    target = dl_dir / file_path
+    
+    try:
+        target.resolve().relative_to(dl_dir.resolve())
+    except ValueError:
+        raise HTTPException(403, "Access denied")
+        
+    if target.exists() and target.is_file():
+        target.unlink()
+    return {"status": "deleted"}
 
 # ── Entry point ───────────────────────────────────────────────────────
 

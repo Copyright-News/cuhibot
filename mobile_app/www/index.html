@@ -625,7 +625,7 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
 <div id="toast" style="position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px) scale(0.92); background:rgba(30,30,30,0.92); backdrop-filter:blur(20px) saturate(180%); padding:12px 28px; border-radius:100px; color:#fff; font-size:15px; font-weight:600; opacity:0; pointer-events:none; z-index:9999; border:0.5px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.3); letter-spacing: -0.2px;"></div>
 
 <script>
-const tg = window.Telegram?.WebApp;
+const tg = (window.Telegram && window.Telegram.WebApp);
 let activePage = 'home';
 
 // Visibility API to save battery/server
@@ -646,10 +646,10 @@ if (tg) {
   } catch(e){}
 }
 
-let INIT_DATA = tg?.initData || '';
+let INIT_DATA = (tg && tg.initData) || '';
 let API_BASE = window.location.origin;
 
-const isNativeApp = window.location.hostname === 'localhost' || !tg?.initData;
+const isNativeApp = window.location.hostname === 'localhost' || !(tg && tg.initData);
 
 if (isNativeApp) {
   const savedToken = localStorage.getItem('cuhi_app_token');
@@ -678,7 +678,7 @@ function loginApp() {
 
 // ── Theme System ────────────────────────────────────────────────────────
 function detectTelegramTheme() {
-  const cs = tg?.colorScheme;
+  const cs = (tg && tg.colorScheme);
   if (cs === 'light') return 'light';
   return 'dark';
 }
@@ -696,7 +696,7 @@ function setTheme(mode) {
   localStorage.setItem('cuhi-theme', mode);
   applyTheme(mode);
   showToast(mode === 'auto' ? 'Theme: Auto' : mode === 'light' ? 'Theme: Light' : 'Theme: Dark');
-  tg?.HapticFeedback?.selectionChanged();
+  (tg && tg.HapticFeedback && tg.HapticFeedback.selectionChanged());
 }
 
 // Initialize theme on load
@@ -709,7 +709,7 @@ function setTheme(mode) {
 
 // Populate account from Telegram user data
 function populateAccount() {
-  const u = tg?.initDataUnsafe?.user;
+  const u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user);
   if (!u) return;
   const fullName = [u.first_name, u.last_name].filter(Boolean).join(' ');
   document.getElementById('account-name').textContent = fullName || 'User';
@@ -799,7 +799,7 @@ function navTo(page) {
   if (page === 'settings') loadSettings();
   if (page === 'account') populateAccount();
   
-  tg?.HapticFeedback?.selectionChanged();
+  (tg && tg.HapticFeedback && tg.HapticFeedback.selectionChanged());
 }
 
 function getPlatformBadge(p) {
@@ -875,6 +875,54 @@ async function updateHomeStats() {
     document.getElementById('disk-free').textContent = disk.free_gb + ' GB free';
     
   } catch(e) { console.error('Poll error', e); }
+  
+  if (isNativeApp) {
+    syncNativeFiles();
+  }
+}
+
+let isSyncing = false;
+async function syncNativeFiles() {
+  if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.Filesystem) return;
+  if (isSyncing) return;
+  isSyncing = true;
+  
+  try {
+    const { Filesystem, Directory } = window.Capacitor.Plugins;
+    const files = await callApi('GET', '/api/files');
+    
+    if (files && files.length > 0) {
+      document.getElementById('dl-status-info').textContent = `Syncing ${files.length} file(s) to phone...`;
+      
+      for (const file of files) {
+        try {
+          const downloadUrl = API_BASE + '/api/files/' + encodeURIComponent(file.path);
+          // Save in Documents/CuhiBot/ followed by original structure
+          const localPath = 'CuhiBot/' + file.path;
+          
+          await Filesystem.downloadFile({
+            url: downloadUrl,
+            path: localPath,
+            directory: Directory.Documents,
+            headers: {
+              'X-Init-Data': INIT_DATA
+            }
+          });
+          
+          // Delete from server after successful download
+          await callApi('DELETE', '/api/files/' + encodeURIComponent(file.path));
+          
+        } catch(err) {
+          console.error("Failed to sync file", file.path, err);
+        }
+      }
+      document.getElementById('dl-status-info').textContent = 'Sync complete.';
+    }
+  } catch(e) {
+    console.error("Sync loop error", e);
+  } finally {
+    isSyncing = false;
+  }
 }
 
 function startHomePolling() {
@@ -913,7 +961,7 @@ async function addSource() {
     document.getElementById('source-url').value = '';
     showToast('Source added');
     loadSources();
-    tg?.HapticFeedback?.notificationOccurred('success');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
   } catch(e) { showToast(e.message); }
 }
 
@@ -922,7 +970,7 @@ async function deleteSource(platform, url) {
     await callApi('DELETE', `/api/sources/${platform}/${url}`);
     showToast('Source Removed');
     loadSources();
-    tg?.HapticFeedback?.notificationOccurred('warning');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('warning'));
   } catch(e) { showToast(e.message); }
 }
 
@@ -932,11 +980,12 @@ async function startDownload() {
       media_type: document.getElementById('dl-media-type').value,
       stories: document.getElementById('dl-stories').checked,
       highlights: document.getElementById('dl-highlights').checked,
-      force: document.getElementById('dl-force').checked
+      force: document.getElementById('dl-force').checked,
+      client: isNativeApp ? 'android' : 'telegram'
     });
     showToast('Download started');
     updateHomeStats();
-    tg?.HapticFeedback?.impactOccurred('medium');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred('medium'));
   } catch(e) { showToast(e.message); }
 }
 
@@ -945,7 +994,7 @@ async function stopDownload() {
     await callApi('POST', '/api/download/stop');
     showToast('Stop signal sent');
     updateHomeStats();
-    tg?.HapticFeedback?.notificationOccurred('warning');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('warning'));
   } catch(e) { showToast(e.message); }
 }
 
@@ -975,7 +1024,7 @@ async function clearHistory() {
   try {
     await callApi('DELETE', '/api/history');
     showToast('History cleared');
-    tg?.HapticFeedback?.notificationOccurred('success');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
     loadHistory();
   } catch(e) { showToast(e.message); }
 }
@@ -1007,7 +1056,7 @@ async function saveChannel() {
   try {
     await callApi('POST', '/api/channel', { channel_id });
     showToast('Channel updated');
-    tg?.HapticFeedback?.notificationOccurred('success');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
   } catch(e) { showToast(e.message); }
 }
 
@@ -1016,7 +1065,7 @@ async function saveSchedule() {
   try {
     await callApi('POST', '/api/schedule', { cron, enabled: !!cron });
     showToast(cron ? 'Schedule set' : 'Schedule cleared');
-    tg?.HapticFeedback?.notificationOccurred('success');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
   } catch(e) { showToast(e.message); }
 }
 
@@ -1029,7 +1078,7 @@ async function uploadCookie() {
     document.getElementById('cookie-data').value = '';
     showToast(`${platform} cookie saved`);
     loadSettings();
-    tg?.HapticFeedback?.notificationOccurred('success');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
   } catch(e) { showToast(e.message); }
 }
 
@@ -1039,7 +1088,7 @@ async function deleteCookie() {
     await callApi('DELETE', `/api/cookies/${platform}`);
     showToast(`${platform} cookie deleted`);
     loadSettings();
-    tg?.HapticFeedback?.notificationOccurred('warning');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('warning'));
   } catch(e) { showToast(e.message); }
 }
 
