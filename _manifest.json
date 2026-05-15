@@ -1,38 +1,27 @@
 {
-  "task": "deep_audit_and_fix",
+  "task": "Fix Android download, storage permission, pull-to-refresh, real-time sync",
   "workspace": "cuhibot",
-  "original_model": "Claude Sonnet (Thinking)",
-  "current_model": "Claude Sonnet (Thinking)",
+  "original_model": "Claude Sonnet 4.6 (Thinking)",
+  "current_model": "Claude Sonnet 4.6 (Thinking)",
   "total_parts": 1,
   "parts_completed": [1],
   "stopped_at": null,
   "next_part": null,
   "next_function": null,
   "status": "complete",
-  "bugs_found": 12,
-  "bugs_fixed": 12,
-  "verified": "YES — py_compile zero errors on bot.py and server.py",
   "files_changed": [
-    "bot.py",
-    "server.py",
-    "mobile_app/www/index.html",
-    "mobile_app/android/app/src/main/AndroidManifest.xml",
-    "mobile_app/android/variables.gradle",
-    "mobile_app/capacitor.config.json"
+    "app.html — JS rewritten: getCapFilesystem, requestStoragePermission, initNativePermission, syncNativeFiles, startSyncPolling, stopSyncPolling, addPullToRefresh, startDownload, stopDownload, boot sequence",
+    "mobile_app/android/app/src/main/AndroidManifest.xml — added READ_MEDIA_AUDIO permission",
+    "mobile_app/android/variables.gradle — compileSdkVersion/targetSdkVersion bumped to 36"
   ],
-  "style_notes": "bot.py: async/await throughout, run_in_executor for all blocking I/O, locked_file for all file writes, STOP_EVENTS dict for per-user cancellation, ACTIVE_USERS set for concurrency guard, MINIAPP_QUEUE lazily initialized inside _combined_post_init. Android: uses target=='android' string comparison inside realtime_download/drain to skip Telegram upload and keep files on disk for /api/files.",
-  "key_fixes_summary": {
-    "CRITICAL_1": "asyncio.Queue module-level init → lazy init in post_init",
-    "CRITICAL_2": "m_export callback missing send_menu → added",
-    "CRITICAL_3": "android drain() called add_sent_files incorrectly → fixed",
-    "CRITICAL_4": "window.CapacitorFilesystem (v3 API) → window.Capacitor.Plugins.Filesystem (v6)",
-    "CRITICAL_5": "Mini App Stop button broken: stop_flag never read by bot → added to fallback poll",
-    "MODERATE_1": "wipe_downloads missing from _run_miniapp_download for telegram clients → added",
-    "MODERATE_2": "settings re-read per URL in inner loop → moved to once before loop",
-    "MODERATE_3": "Missing READ_MEDIA_IMAGES/VIDEO for Android 13+ → added to manifest",
-    "MODERATE_4": "compileSdkVersion=36 unreleased → changed to 35",
-    "MODERATE_5": "isSyncing not reset on perm-denied + no per-file error feedback → fixed both",
-    "MINOR_1": "bare capacitor.config.json → added server/plugin/android blocks",
-    "MINOR_2": "SCHEDULE_OPTIONS defined after handle_callback → moved above"
-  }
+  "bugs_fixed": {
+    "CRITICAL_1": "Wrong Capacitor Filesystem API — window.CapacitorFilesystem -> window.Capacitor.Plugins.Filesystem via getCapFilesystem()",
+    "CRITICAL_2": "Permission never requested on first launch — initNativePermission() now called at boot",
+    "CRITICAL_3": "storagePermGranted flag never re-checked after manual grant — now calls checkPermissions() live before every sync",
+    "CRITICAL_4": "startDownload() did not trigger file sync — now starts startSyncPolling() (45 attempts x 4s = 3min)",
+    "MODERATE_5": "No pull-to-refresh — addPullToRefresh() attached to all 4 pages via touch events",
+    "MODERATE_6": "Real-time: pull-to-refresh now gives on-demand refresh on all pages; home still polls every 3s",
+    "MINOR_7": "Added READ_MEDIA_AUDIO to AndroidManifest for complete Android 13+ media coverage"
+  },
+  "style_notes": "Matched callApi pattern, showToast, animateValue. No new CSS except injected @keyframes spin for PTR."
 }
