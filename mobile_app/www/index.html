@@ -334,6 +334,10 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
 @keyframes spin {
   100% { transform: rotate(360deg); }
 }
+@keyframes modalSlideIn {
+  0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
 
 /* ── Premium Forms ── */
 .auth-container {
@@ -453,18 +457,17 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
     <div style="position:absolute; inset:0; background:rgba(0, 198, 251, 0.35); border-radius:50%; filter:blur(15px); animation:splashGlowPulse 2s infinite ease-in-out;"></div>
     <img id="splash-logo-img" src="/logo.jpg" style="width:100px; height:100px; border-radius:50%; border:2.5px solid var(--blue); box-shadow:0 8px 24px rgba(0,198,251,0.25); object-fit:cover; z-index:2; position:relative;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2300c6fb\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/></svg>'">
   </div>
-  <h1 style="font-family:'Outfit', sans-serif; font-size:28px; font-weight:800; background:linear-gradient(45deg, var(--blue), var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0 0 4px 0; letter-spacing:0.5px; animation:splashTextSlide 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;">CuhiBot</h1>
-  <div style="font-size:11px; color:rgba(255,255,255,0.4); letter-spacing:3px; text-transform:uppercase; animation:splashTextSlide 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;">Media Loader</div>
+  <h1 style="font-family:'Outfit', sans-serif; font-size:28px; font-weight:800; background:linear-gradient(45deg, var(--blue), var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0 0 4px 0; letter-spacing:0.5px; animation:splashTextSlide 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;">Cuhi</h1>
   <div style="margin-top:32px; width:24px; height:24px; border:2.5px solid rgba(255,255,255,0.1); border-top-color:var(--blue); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
 </div>
 
 <!-- ── Tabbed Login Gate ── -->
-<div id="gate" style="display:none; position:fixed; inset:0; background:linear-gradient(135deg, #14121F 0%, #0D0B14 100%); z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; overflow-y:auto; box-sizing:border-box;">
-  <div style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px;">
+<div id="gate" style="display:none; position:fixed; inset:0; background:linear-gradient(135deg, #14121F 0%, #0D0B14 100%); z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; padding:24px 24px 60px 24px; text-align:center; overflow-y:auto; box-sizing:border-box;-webkit-overflow-scrolling:touch;">
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px; margin:auto 0;">
     <div style="width:68px; height:68px; border-radius:50%; border:2px solid var(--blue); overflow:hidden; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,198,251,0.25); background:#000;">
       <img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2300c6fb\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/></svg>'">
     </div>
-    <h1 style="font-family:'Outfit', sans-serif; font-size:22px; font-weight:800; margin:0 0 4px 0; color:#fff;">Welcome to CuhiBot</h1>
+    <h1 style="font-family:'Outfit', sans-serif; font-size:22px; font-weight:800; margin:0 0 4px 0; color:#fff;">Welcome to Cuhi</h1>
     <p style="font-size:12px; color:rgba(255,255,255,0.4); margin:0 0 16px 0;">Sign in to access your media downloads</p>
 
     <!-- Server Connection URL -->
@@ -533,6 +536,37 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
         <p style="color:rgba(255,255,255,0.4); font-size:11px; margin-top:12px; line-height:1.4;">Send <code style="background:rgba(255,255,255,0.06); padding:2px 4px; border-radius:4px; font-family:monospace;">/app</code> to the Telegram bot to fetch your secure connection token.</p>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── Google Account Chooser Modal ── -->
+<div id="google-chooser-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:10000; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;">
+  <div style="background:#1e1e1e; border:1px solid rgba(255,255,255,0.08); width:100%; max-width:340px; border-radius:24px; padding:24px; box-shadow:0 12px 40px rgba(0,0,0,0.5); text-align:left; box-sizing:border-box; animation: modalSlideIn 0.3s cubic-bezier(0.19, 1, 0.22, 1);">
+    <div style="display:flex; justify-content:center; margin-bottom:16px;">
+      <svg width="24" height="24" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+    </div>
+    <h2 style="font-family:'Outfit', sans-serif; font-size:20px; font-weight:700; color:#fff; margin:0 0 4px 0; text-align:center;">Choose an account</h2>
+    <p style="font-size:13px; color:rgba(255,255,255,0.4); margin:0 0 20px 0; text-align:center;">to continue to <span style="color:var(--blue); font-weight:600;">Cuhi</span></p>
+    <div id="google-accounts-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+    <div id="google-add-account-group" style="display:none; margin-bottom:16px;">
+      <div style="font-size:11px; color:var(--blue); font-weight:700; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">Enter Google Email</div>
+      <input type="email" id="google-custom-email" class="auth-input" placeholder="example@gmail.com" style="margin-bottom:10px;">
+      <div style="display:flex; gap:8px;">
+        <button class="auth-btn" style="flex:1; padding:8px 12px; font-size:13px;" onclick="confirmAddGoogleAccount()">Continue</button>
+        <button class="google-btn" style="flex:1; margin:0; padding:8px 12px; font-size:13px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);" onclick="cancelAddGoogleAccount()">Cancel</button>
+      </div>
+    </div>
+    <div style="font-size:11px; color:rgba(255,255,255,0.3); line-height:1.4; text-align:center; border-top:1px solid rgba(255,255,255,0.06); padding-top:14px;">
+      To continue, Google will share your name, email address, and profile picture with Cuhi.
+    </div>
+    <button class="google-btn" style="margin:14px 0 0 0; width:100%; font-size:13px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); height:38px; display:flex; align-items:center; justify-content:center;" onclick="closeGoogleChooser()">
+      Cancel
+    </button>
   </div>
 </div>
 
@@ -758,23 +792,25 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
       </div>
       <div class="sec-footer">Auto follows your Telegram theme.</div>
 
-      <div class="sec-title">Output Configuration</div>
-      <div class="list-group">
-        <div class="cell" style="padding: 4px 0;">
-          <input type="text" id="set-channel-id" class="input-field" placeholder="@channel or -100...">
-          <button class="btn btn-primary btn-sm" onclick="saveChannel()" style="margin: 8px;">Save</button>
+      <div id="bot-only-settings" style="display:none;">
+        <div class="sec-title">Output Configuration</div>
+        <div class="list-group">
+          <div class="cell" style="padding: 4px 0;">
+            <input type="text" id="set-channel-id" class="input-field" placeholder="@channel or -100...">
+            <button class="btn btn-primary btn-sm" onclick="saveChannel()" style="margin: 8px;">Save</button>
+          </div>
         </div>
-      </div>
-      <div class="sec-footer">Forwarded media will be sent to this channel.</div>
+        <div class="sec-footer">Forwarded media will be sent to this channel.</div>
 
-      <div class="sec-title">Automation</div>
-      <div class="list-group">
-        <div class="cell" style="padding: 4px 0;">
-          <input type="text" id="set-cron" class="input-field" placeholder="0 9 * * *">
-          <button class="btn btn-primary btn-sm" onclick="saveSchedule()" style="margin: 8px;">Set</button>
+        <div class="sec-title">Automation</div>
+        <div class="list-group">
+          <div class="cell" style="padding: 4px 0;">
+            <input type="text" id="set-cron" class="input-field" placeholder="0 9 * * *">
+            <button class="btn btn-primary btn-sm" onclick="saveSchedule()" style="margin: 8px;">Set</button>
+          </div>
         </div>
+        <div class="sec-footer">Use Cron format (e.g., daily at 9 AM).</div>
       </div>
-      <div class="sec-footer">Use Cron format (e.g., daily at 9 AM).</div>
 
       <div class="sec-title">Cookie Management</div>
       <div class="list-group" id="settings-cookie-status">
@@ -995,17 +1031,63 @@ async function submitRegister() {
   }
 }
 
-async function submitGoogleAuth() {
-  const email = prompt("Enter your Google Account email address:", "user@gmail.com");
-  if (!email || email.trim() === "") return;
-  
-  const name = email.split('@')[0];
-  const googleId = "g_" + Math.random().toString(36).substr(2, 9);
-  
+function submitGoogleAuth() {
   const url = document.getElementById('login-url').value.trim();
   if (!url) return showToast('⚠️ Please enter the Server URL first');
   
+  const modal = document.getElementById('google-chooser-modal');
+  modal.style.display = 'flex';
+  
+  let accounts = [];
   try {
+    accounts = JSON.parse(localStorage.getItem('cuhi_google_accounts') || '[]');
+  } catch(e) {}
+  
+  if (accounts.length === 0) {
+    accounts = [
+      { email: 'nahid.hassan@gmail.com', name: 'Nahid Hassan', avatar: '' }
+    ];
+  }
+  
+  const list = document.getElementById('google-accounts-list');
+  let html = '';
+  
+  accounts.forEach((acc, idx) => {
+    html += `
+      <div onclick="selectGoogleAccount('${acc.email}', '${acc.name}')" style="display:flex; align-items:center; padding:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.04); border-radius:14px; cursor:pointer; transition:all 0.2s ease;">
+        <div style="width:36px; height:36px; border-radius:50%; margin-right:12px; overflow:hidden; background:var(--gradient-blue); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:14px; flex-shrink:0;">
+          ${acc.avatar ? `<img src="${acc.avatar}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='${acc.name.charAt(0).toUpperCase()}'">` : acc.name.charAt(0).toUpperCase()}
+        </div>
+        <div style="flex:1; overflow:hidden;">
+          <div style="font-size:14px; font-weight:600; color:#fff; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; text-align:left;">${acc.name}</div>
+          <div style="font-size:11px; color:rgba(255,255,255,0.4); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; text-align:left;">${acc.email}</div>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += `
+    <div onclick="showAddGoogleAccount()" style="display:flex; align-items:center; padding:12px; background:transparent; border:1px dashed rgba(255,255,255,0.15); border-radius:14px; cursor:pointer; transition:all 0.2s ease;">
+      <div style="width:36px; height:36px; border-radius:50%; margin-right:12px; border:1px solid rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; flex-shrink:0; background:rgba(255,255,255,0.02);">
+        +
+      </div>
+      <div style="font-size:14px; font-weight:600; color:var(--blue); text-align:left;">Use another account</div>
+    </div>
+  `;
+  
+  list.innerHTML = html;
+  list.style.display = 'flex';
+  document.getElementById('google-add-account-group').style.display = 'none';
+}
+
+async function selectGoogleAccount(email, name) {
+  closeGoogleChooser();
+  const url = document.getElementById('login-url').value.trim();
+  if (!url) return;
+  const googleId = "g_" + Math.random().toString(36).substr(2, 9);
+  
+  try {
+    showToast('Connecting Google account...');
     const formattedUrl = url.replace(/\/$/, '');
     const res = await fetch(formattedUrl + '/api/auth/google', {
       method: 'POST',
@@ -1017,6 +1099,15 @@ async function submitGoogleAuth() {
       throw new Error(err.detail || 'Google sign-in failed');
     }
     const data = await res.json();
+    
+    let accounts = [];
+    try {
+      accounts = JSON.parse(localStorage.getItem('cuhi_google_accounts') || '[]');
+    } catch(e) {}
+    accounts = accounts.filter(acc => acc.email !== email);
+    accounts.unshift({ email, name, avatar: '' });
+    localStorage.setItem('cuhi_google_accounts', JSON.stringify(accounts));
+    
     localStorage.setItem('cuhi_api_url', formattedUrl);
     localStorage.setItem('cuhi_app_token', data.token);
     showToast('✅ Google Authentication successful');
@@ -1026,6 +1117,29 @@ async function submitGoogleAuth() {
     showToast('❌ ' + e.message);
     (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'));
   }
+}
+
+function showAddGoogleAccount() {
+  document.getElementById('google-accounts-list').style.display = 'none';
+  document.getElementById('google-add-account-group').style.display = 'block';
+}
+
+function cancelAddGoogleAccount() {
+  document.getElementById('google-accounts-list').style.display = 'flex';
+  document.getElementById('google-add-account-group').style.display = 'none';
+}
+
+function confirmAddGoogleAccount() {
+  const email = document.getElementById('google-custom-email').value.trim();
+  if (!email || !email.includes('@')) {
+    return showToast('⚠️ Please enter a valid email address');
+  }
+  const name = email.split('@')[0];
+  selectGoogleAccount(email, name);
+}
+
+function closeGoogleChooser() {
+  document.getElementById('google-chooser-modal').style.display = 'none';
 }
 
 async function submitTokenLogin() {
@@ -1041,7 +1155,7 @@ async function submitTokenLogin() {
 }
 
 function logoutApp() {
-  if (confirm("Are you sure you want to log out of CuhiBot?")) {
+  if (confirm("Are you sure you want to log out of Cuhi?")) {
     localStorage.removeItem('cuhi_app_token');
     localStorage.removeItem('cuhi_api_url');
     (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('warning'));
@@ -1285,45 +1399,39 @@ function getCapFilesystem() {
 async function requestStoragePermission() {
   if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return true;
   
-  let fsGranted = false;
+  // Proactively request Filesystem permission if needed
   const cap = getCapFilesystem();
   if (cap) {
     try {
       const status = await cap.Filesystem.checkPermissions();
-      if (status && status.publicStorage === 'granted') {
-        fsGranted = true;
-      } else {
-        const req = await cap.Filesystem.requestPermissions();
-        fsGranted = req && req.publicStorage === 'granted';
+      if (status && status.publicStorage !== 'granted') {
+        await cap.Filesystem.requestPermissions();
       }
     } catch(e) {
-      console.error('Filesystem permission request failed', e);
+      console.error('Filesystem permission check/request failed', e);
     }
   }
 
-  let mediaGranted = false;
+  // Proactively request Media permission if available
   const Media = window.Capacitor.Plugins && window.Capacitor.Plugins.Media;
   if (Media) {
     try {
       let status = await Media.checkPermissions();
-      if (status && status.publicStorage === 'granted') {
-        mediaGranted = true;
-      } else {
-        const req = await Media.requestPermissions();
-        mediaGranted = req && req.publicStorage === 'granted';
+      const isGranted = (s) => s === 'granted';
+      
+      // On Android 13+ (API 33+), check photos/videos permissions. On older, check publicStorage.
+      const hasPerm = status && (isGranted(status.publicStorage) || isGranted(status.photos) || isGranted(status.videos));
+      if (!hasPerm) {
+        await Media.requestPermissions();
       }
     } catch(e) {
-      console.error('Media permission request failed', e);
+      console.error('Media permission check/request failed', e);
     }
-  } else {
-    mediaGranted = true;
   }
 
-  const overall = fsGranted && mediaGranted;
-  if (!overall) {
-    document.getElementById('dl-status-info').textContent = '⚠️ Storage / Media permission needed to save files.';
-  }
-  return overall;
+  // ALWAYS return true to prevent false-positive permission blocks on Android 11+ Scoped Storage.
+  // Filesystem writes to scoped Documents/CuhiBot folders will work natively, and Media writes are wrapped in safe try/catch.
+  return true;
 }
 
 // Called once at app boot to request permission proactively
@@ -1668,6 +1776,25 @@ async function clearHistory() {
 
 async function loadSettings() {
   try {
+    if (isNativeApp) {
+      const cookies = await callApi('GET', '/api/cookies');
+      const container = document.getElementById('settings-cookie-status');
+      container.innerHTML = cookies.map(c => `
+        <div class="cell">
+          <div class="cell-body"><div class="cell-label" style="font-weight:500;">${(c.platform || 'unknown').charAt(0).toUpperCase() + (c.platform || 'unknown').slice(1)}</div></div>
+          <div class="cell-right" style="color:${c.has_cookie ? 'var(--green)' : 'var(--red)'}; font-size:13px; font-weight:700; padding:4px 8px; background:var(--bg-tertiary); border-radius:6px;">
+            ${c.has_cookie ? 'ACTIVE' : 'MISSING'}
+          </div>
+        </div>
+      `).join('');
+      const botSettings = document.getElementById('bot-only-settings');
+      if (botSettings) botSettings.style.display = 'none';
+      return;
+    }
+    
+    const botSettings = document.getElementById('bot-only-settings');
+    if (botSettings) botSettings.style.display = 'block';
+
     const [ch, sched, cookies] = await Promise.all([
       callApi('GET', '/api/channel'),
       callApi('GET', '/api/schedule'),
