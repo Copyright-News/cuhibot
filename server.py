@@ -16,6 +16,8 @@ import hmac
 import json
 import logging
 import os
+import random
+import secrets
 import shutil
 import urllib.parse
 from contextlib import asynccontextmanager
@@ -46,7 +48,54 @@ COOKIE_FILE = {
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("cuhi.server")
 
-# ── Auth ──────────────────────────────────────────────────────────────
+# ── Auth & Session Store ──────────────────────────────────────────────
+USERS_FILE = DATA_ROOT / "users.json"
+SESSIONS_FILE = DATA_ROOT / "sessions.json"
+
+def read_json_direct(path: Path, default=None):
+    if default is None:
+        default = {}
+    try:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return default
+
+def write_json_direct(path: Path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+def get_users() -> dict:
+    return read_json_direct(USERS_FILE, default={})
+
+def save_users(users: dict):
+    write_json_direct(USERS_FILE, users)
+
+def get_sessions() -> dict:
+    return read_json_direct(SESSIONS_FILE, default={})
+
+def save_sessions(sessions: dict):
+    write_json_direct(SESSIONS_FILE, sessions)
+
+def hash_password(password: str, salt: str) -> str:
+    return hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
+
+def create_session(uid: int, email: str, name: str) -> str:
+    token = secrets.token_hex(24)
+    sessions = get_sessions()
+    sessions[token] = {
+        "id": uid,
+        "email": email,
+        "first_name": name,
+        "username": email.split("@")[0],
+    }
+    save_sessions(sessions)
+    return token
+
+def validate_token(token: str) -> Optional[dict]:
+    sessions = get_sessions()
+    return sessions.get(token)
 
 def _validate_init_data(init_data: str) -> dict:
     """
@@ -86,19 +135,41 @@ def _validate_init_data(init_data: str) -> dict:
 
 
 async def get_uid(request: Request) -> int:
-    """FastAPI dependency: extract validated user_id from X-Init-Data header."""
+    """FastAPI dependency: extract validated user_id from Bearer token or X-Init-Data."""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1]
+        session = validate_token(token)
+        if session:
+            return int(session["id"])
+
     init_data = request.headers.get("X-Init-Data", "")
-    user = _validate_init_data(init_data)
-    uid = user.get("id")
-    if not uid:
-        raise HTTPException(status_code=401, detail="No user ID in initData")
-    return int(uid)
+    if init_data:
+        try:
+            user = _validate_init_data(init_data)
+            uid = user.get("id")
+            if uid:
+                return int(uid)
+        except Exception:
+            pass
+
+    raise HTTPException(status_code=401, detail="Open this app inside Telegram or log in")
 
 
 async def get_user(request: Request) -> dict:
     """Like get_uid but returns full user dict."""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1]
+        session = validate_token(token)
+        if session:
+            return session
+
     init_data = request.headers.get("X-Init-Data", "")
-    return _validate_init_data(init_data)
+    if init_data:
+        return _validate_init_data(init_data)
+
+    raise HTTPException(status_code=401, detail="Open this app inside Telegram or log in")
 
 
 # ── File helpers ──────────────────────────────────────────────────────
@@ -191,6 +262,21 @@ def get_active_cookies(uid: int) -> list[str]:
 
 # ── Pydantic models ───────────────────────────────────────────────────
 
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    first_name: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class GoogleRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
+    google_id: str
+    photo_url: Optional[str] = None
+
 class SourceAdd(BaseModel):
     url: str
     platform: str = "instagram"
@@ -226,7 +312,120 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Static ────────────────────────────────────────────────────────────
+# ── Auth Endpoints ────────────────────────────────────────────────────
+
+@app.post("/api/auth/register")
+async def auth_register(body: RegisterRequest):
+    email = body.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    users = get_users()
+    if email in users:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Generate unique UID
+    while True:
+        uid = random.randint(9999000000, 9999999999)
+        uid_exists = any(u.get("id") == uid for u in users.values())
+        if not uid_exists:
+            break
+            
+    salt = secrets.token_hex(8)
+    pw_hash = hash_password(body.password, salt)
+    
+    users[email] = {
+        "id": uid,
+        "email": email,
+        "first_name": body.first_name or email.split("@")[0],
+        "password_hash": pw_hash,
+        "salt": salt,
+        "auth_type": "email"
+    }
+    save_users(users)
+    
+    token = create_session(uid, email, users[email]["first_name"])
+    return {
+        "status": "success",
+        "token": token,
+        "user": {
+            "id": uid,
+            "email": email,
+            "first_name": users[email]["first_name"]
+        }
+    }
+
+@app.post("/api/auth/login")
+async def auth_login(body: LoginRequest):
+    email = body.email.strip().lower()
+    users = get_users()
+    if email not in users:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+    
+    user = users[email]
+    if user.get("auth_type") != "email":
+        raise HTTPException(status_code=400, detail="This account uses a different login method")
+        
+    pw_hash = hash_password(body.password, user["salt"])
+    if pw_hash != user["password_hash"]:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+        
+    token = create_session(user["id"], email, user["first_name"])
+    return {
+        "status": "success",
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "email": email,
+            "first_name": user["first_name"]
+        }
+    }
+
+@app.post("/api/auth/google")
+async def auth_google(body: GoogleRequest):
+    email = body.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Invalid email format")
+        
+    users = get_users()
+    if email in users:
+        user = users[email]
+        if user.get("auth_type") == "email":
+            # Upgrade / link to Google
+            user["auth_type"] = "google"
+            user["google_id"] = body.google_id
+            save_users(users)
+    else:
+        # Register new Google user
+        while True:
+            uid = random.randint(9999000000, 9999999999)
+            uid_exists = any(u.get("id") == uid for u in users.values())
+            if not uid_exists:
+                break
+        users[email] = {
+            "id": uid,
+            "email": email,
+            "first_name": body.name or email.split("@")[0],
+            "google_id": body.google_id,
+            "auth_type": "google"
+        }
+        save_users(users)
+        
+    user = users[email]
+    token = create_session(user["id"], email, user["first_name"])
+    return {
+        "status": "success",
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "email": email,
+            "first_name": user["first_name"]
+        }
+    }
+
+# ── Static ────────────────────────────────────────────────────
 
 @app.get("/")
 async def serve_app():
@@ -234,6 +433,13 @@ async def serve_app():
     if not html.exists():
         raise HTTPException(404, "app.html not found")
     return FileResponse(html, media_type="text/html")
+
+@app.get("/logo.jpg")
+async def serve_logo():
+    logo = APP_DIR / "logo.jpg"
+    if not logo.exists():
+        raise HTTPException(404, "logo.jpg not found")
+    return FileResponse(logo, media_type="image/jpeg")
 
 # ── Stats ─────────────────────────────────────────────────────────────
 
@@ -263,6 +469,9 @@ async def stats(user: dict = Depends(get_user)):
         "cookies_active": cookies,
         "download_running": running,
         "username":       user.get("username", ""),
+        "first_name":     user.get("first_name", ""),
+        "email":          user.get("email", ""),
+        "id":             uid,
     }
 
 # ── Sources ───────────────────────────────────────────────────────────

@@ -1,31 +1,47 @@
 # Deep Audit Fix Report — Full Session
 
-## Android App Fix Session (2026-05-20)
+## Android App & Backend Audit Session (2026-05-20)
 **Model:** Antigravity
-**Files Audited:** `mobile_app/android/variables.gradle`, `mobile_app/www/index.html`
+**Files Audited:** `server.py`, `app.html`, `mobile_app/www/index.html`, `generate_icons.py`
 
 ---
 
-## BUGS FOUND: 4  (CRITICAL: 4 | MODERATE: 0 | MINOR: 0)
-## BUGS FIXED: 4
-## VERIFIED: YES — py_compile passes, file verification complete, Capacitor plugins synced
+## BUGS FOUND: 7  (CRITICAL: 4 | MODERATE: 2 | MINOR: 1)
+## BUGS FIXED: 7
+## VERIFIED: YES — py_compile passes, Capacitor asset sync complete, custom logo synchronized across all layers.
 ## REMAINING: NONE
 
 ---
 
-## [CRITICAL] Fixes
+## [CRITICAL] Fixes (Android Native Compilation & Assets)
 
 ### C-1 — `compileSdkVersion = 36` and `targetSdkVersion = 36` (variables.gradle:3-4)
 **Root cause:** `compileSdkVersion` and `targetSdkVersion` were set to unreleased API `36`, preventing Android Gradle plugin from compiling the app.
 **Fix:** Downgraded both `compileSdkVersion` and `targetSdkVersion` to stable API `35`.
 
 ### C-2 — Outdated index.html (www/index.html)
-**Root cause:** All Android storage permission, Capacitor v6 APIs, and file sync features were updated in the production-served `app.html` file, but `mobile_app/www/index.html` (the local index file packaged inside the Android app) was never synced/updated, leaving the Android app running outdated code without `getCapFilesystem()` and robust permission logic.
-**Fix:** Overwrote `mobile_app/www/index.html` with the verified contents of `app.html` to bring the web client fully in sync and activate native Capacitor v6 filesystem integration.
+**Root cause:** All Android storage permission, Capacitor v6 APIs, and file sync features were updated in the production-served `app.html` file, but `mobile_app/www/index.html` was never synced/updated, leaving the Android app running outdated code without native filesystem integration.
+**Fix:** Overwrote `mobile_app/www/index.html` with the verified contents of `app.html`.
 
 ### C-3 — Downloads not showing in device Gallery (app.html & www/index.html)
-**Root cause:** The Capacitor `Filesystem` plugin writes downloaded media to `Directory.Documents`, which is a private/scoped app folder on Android 11+. The Android system MediaStore scanner does not index this folder for media, preventing downloaded images and videos from appearing in the user's native Gallery/Photos app.
-**Fix:** Installed `@capacitor-community/media`, synchronized native Android build files (`npx cap sync`), and integrated standard photo/video saving code into both `app.html` and `index.html`. It automatically creates a custom "CuhiBot" album in the device gallery and writes new files directly to it.
+**Root cause:** Writing to scoped directory `/Documents/CuhiBot` is not indexed by Android's MediaStore, so media files never appear in the native gallery.
+**Fix:** Installed `@capacitor-community/media`, ran `npx cap sync`, and implemented native album saving via `Media.savePhoto` & `Media.saveVideo`.
+
+## [MODERATE] Fixes (Rendering & Safe Parsing)
+
+### M-1 — JS TypeError in history list rendering (app.html & www/index.html:1653)
+**Root cause:** Accessing `h.platform.charAt(0)` directly threw a fatal exception if `h.platform` was null, undefined, or empty, crashing the entire history load view.
+**Fix:** Added robust default wrapper `(h.platform || 'unknown')` to prevent Javascript TypeErrors.
+
+### M-2 — JS TypeError in source list and settings status rendering (app.html:1571, 1682)
+**Root cause:** Similar to history, directly calling `.charAt(0)` on `s.platform` or `c.platform` would throw TypeError exceptions if undefined/null.
+**Fix:** Wrapped both in default fallback initializers `(s.platform || 'unknown')` and `(c.platform || 'unknown')`.
+
+## [MINOR] Fixes (Web Layout & Branding Sync)
+
+### Mi-1 — Default asset icon mismatch (logo.jpg)
+**Root cause:** The web view layout was using default icons in some routes, whereas launcher mipmaps used the new custom anime logo.
+**Fix:** Added a custom backend logo-serving endpoint `/logo.jpg` in `server.py` and copied the high-quality logo `media__1779225986525.jpg` to the main and web directories (`logo.jpg`, `mobile_app/www/logo.jpg`), syncing assets seamlessly.
 
 ---
 

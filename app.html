@@ -320,17 +320,220 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
 }
 .ios-switch input:checked + span { background: #30d158; }
 .ios-switch input:checked + span::before { transform: translateX(20px); }
+
+/* ── Premium Splash Screen ── */
+@keyframes splashGlowPulse {
+  0% { transform: scale(0.95); opacity: 0.4; }
+  50% { transform: scale(1.05); opacity: 0.7; }
+  100% { transform: scale(0.95); opacity: 0.4; }
+}
+@keyframes splashTextSlide {
+  0% { transform: translateY(30px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+/* ── Premium Forms ── */
+.auth-container {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(28, 28, 30, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  margin-top: 10px;
+}
+.auth-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.auth-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+}
+.auth-tab.active {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 198, 251, 0.3);
+}
+.form-group {
+  margin-bottom: 14px;
+  text-align: left;
+}
+.form-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  display: block;
+}
+.auth-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+.auth-input:focus {
+  border-color: var(--blue);
+  background: rgba(255, 255, 255, 0.08);
+}
+.auth-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--blue), var(--pink));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  margin-top: 10px;
+}
+.auth-btn:active {
+  transform: scale(0.98);
+}
+.google-btn {
+  width: 100%;
+  padding: 11px;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+}
+.google-btn:active {
+  transform: scale(0.98);
+}
+.google-icon {
+  width: 18px;
+  height: 18px;
+}
 </style>
 </head>
 <body>
 
-<div id="gate" style="display:none; position:fixed; inset:0; background:#000; z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center;">
-  <div style="font-size:64px; margin-bottom:20px;">📱</div>
-  <h1 style="font-size:24px; font-weight:700; margin-bottom:20px;">Cuhi App Login</h1>
-  <input type="url" id="login-url" placeholder="Server URL (https://...)" style="width:100%; max-width:300px; padding:15px; border-radius:12px; border:none; background:#1c1c1e; color:#fff; font-size:16px; margin-bottom:12px; outline:none; text-align:center;">
-  <input type="text" id="login-token" placeholder="App Token (UID:HMAC)" style="width:100%; max-width:300px; padding:15px; border-radius:12px; border:none; background:#1c1c1e; color:#fff; font-size:16px; margin-bottom:24px; outline:none; text-align:center;">
-  <button onclick="loginApp()" style="background:#0a84ff; color:#fff; border:none; padding:16px 32px; border-radius:12px; font-size:17px; font-weight:600; cursor:pointer; width:100%; max-width:300px;">Log In</button>
-  <p style="color:rgba(255,255,255,0.4); font-size:14px; margin-top:24px;">Send /app to the bot to get your token.</p>
+<!-- ── Beautiful Pulsing Splash Screen ── -->
+<div id="splash-screen" style="position:fixed; inset:0; background:linear-gradient(135deg, #14121F 0%, #0D0B14 100%); z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:opacity 0.5s ease-in-out, visibility 0.5s; opacity:1; visibility:visible;">
+  <div style="position:relative; width:100px; height:100px; margin-bottom:20px;">
+    <div style="position:absolute; inset:0; background:rgba(0, 198, 251, 0.35); border-radius:50%; filter:blur(15px); animation:splashGlowPulse 2s infinite ease-in-out;"></div>
+    <img id="splash-logo-img" src="/logo.jpg" style="width:100px; height:100px; border-radius:50%; border:2.5px solid var(--blue); box-shadow:0 8px 24px rgba(0,198,251,0.25); object-fit:cover; z-index:2; position:relative;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2300c6fb\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/></svg>'">
+  </div>
+  <h1 style="font-family:'Outfit', sans-serif; font-size:28px; font-weight:800; background:linear-gradient(45deg, var(--blue), var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0 0 4px 0; letter-spacing:0.5px; animation:splashTextSlide 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;">CuhiBot</h1>
+  <div style="font-size:11px; color:rgba(255,255,255,0.4); letter-spacing:3px; text-transform:uppercase; animation:splashTextSlide 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;">Media Loader</div>
+  <div style="margin-top:32px; width:24px; height:24px; border:2.5px solid rgba(255,255,255,0.1); border-top-color:var(--blue); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+</div>
+
+<!-- ── Tabbed Login Gate ── -->
+<div id="gate" style="display:none; position:fixed; inset:0; background:linear-gradient(135deg, #14121F 0%, #0D0B14 100%); z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; overflow-y:auto; box-sizing:border-box;">
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px;">
+    <div style="width:68px; height:68px; border-radius:50%; border:2px solid var(--blue); overflow:hidden; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,198,251,0.25); background:#000;">
+      <img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2300c6fb\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/></svg>'">
+    </div>
+    <h1 style="font-family:'Outfit', sans-serif; font-size:22px; font-weight:800; margin:0 0 4px 0; color:#fff;">Welcome to CuhiBot</h1>
+    <p style="font-size:12px; color:rgba(255,255,255,0.4); margin:0 0 16px 0;">Sign in to access your media downloads</p>
+
+    <!-- Server Connection URL -->
+    <div style="width:100%; margin-bottom:10px; text-align:left;">
+      <input type="url" id="login-url" class="auth-input" placeholder="Server URL (https://...)" style="text-align:center;">
+    </div>
+
+    <!-- Main Container -->
+    <div class="auth-container">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+        <button class="auth-tab" onclick="switchAuthTab('token')">Token</button>
+      </div>
+
+      <!-- Email Login Form -->
+      <div id="auth-login-view">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="auth-login-email" class="auth-input" placeholder="name@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="auth-login-password" class="auth-input" placeholder="••••••••">
+        </div>
+        <button class="auth-btn" onclick="submitLogin()">Log In</button>
+        
+        <div style="display:flex; align-items:center; margin:14px 0; color:rgba(255,255,255,0.25); font-size:11px;">
+          <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
+          <span style="padding:0 8px;">OR</span>
+          <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
+        </div>
+
+        <button class="google-btn" onclick="submitGoogleAuth()">
+          <svg class="google-icon" viewBox="0 0 24 24">
+            <path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.232 0-5.852-2.618-5.852-5.85s2.62-5.85 5.852-5.85c1.47 0 2.809.544 3.842 1.436L20.89 5.37C18.667 3.3 15.688 2 12.24 2 6.6 2 2 6.6 2 12.24s4.6 10.24 10.24 10.24c5.795 0 10.254-4.074 10.254-10.24 0-.693-.08-1.36-.226-1.955H12.24Z"/>
+          </svg>
+          Sign in with Google
+        </button>
+      </div>
+
+      <!-- Email Registration Form -->
+      <div id="auth-register-view" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input type="text" id="auth-reg-name" class="auth-input" placeholder="Your Name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="auth-reg-email" class="auth-input" placeholder="name@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="auth-reg-password" class="auth-input" placeholder="Min. 6 characters">
+        </div>
+        <button class="auth-btn" onclick="submitRegister()">Create Account</button>
+      </div>
+
+      <!-- Telegram Token Login Form -->
+      <div id="auth-token-view" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">App Token</label>
+          <input type="text" id="login-token" class="auth-input" placeholder="UID:HMAC (from bot /app)">
+        </div>
+        <button class="auth-btn" onclick="submitTokenLogin()">Verify Token</button>
+        <p style="color:rgba(255,255,255,0.4); font-size:11px; margin-top:12px; line-height:1.4;">Send <code style="background:rgba(255,255,255,0.06); padding:2px 4px; border-radius:4px; font-family:monospace;">/app</code> to the Telegram bot to fetch your secure connection token.</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="app">
@@ -649,8 +852,6 @@ if (tg) {
 let INIT_DATA = (tg && tg.initData) || '';
 let API_BASE = window.location.origin;
 
-// Detect if running inside native Capacitor container (Android/iOS APK)
-// window.Capacitor.isNativePlatform() is the correct v6+ API
 const isNativeApp = (
   (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
   window.location.hostname === 'localhost' ||
@@ -660,26 +861,192 @@ const isNativeApp = (
 if (isNativeApp) {
   const savedToken = localStorage.getItem('cuhi_app_token');
   const savedApiUrl = localStorage.getItem('cuhi_api_url');
-  
   if (savedToken && savedApiUrl) {
     INIT_DATA = savedToken;
     API_BASE = savedApiUrl;
-  } else {
-    document.getElementById('gate').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
   }
-} else if (!INIT_DATA && window.location.hostname !== 'localhost') {
+}
+
+// Global controllers for Splash & Auth Tabs
+function hideSplash() {
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    splash.style.opacity = '0';
+    splash.style.pointerEvents = 'none';
+    setTimeout(() => {
+      splash.style.display = 'none';
+    }, 500);
+  }
+}
+
+function showLoginGate() {
+  hideSplash();
   document.getElementById('gate').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
 }
 
-function loginApp() {
+function switchAuthTab(tab) {
+  const tabs = document.querySelectorAll('.auth-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  
+  document.getElementById('auth-login-view').style.display = 'none';
+  document.getElementById('auth-register-view').style.display = 'none';
+  document.getElementById('auth-token-view').style.display = 'none';
+  
+  if (tab === 'login') {
+    tabs[0].classList.add('active');
+    document.getElementById('auth-login-view').style.display = 'block';
+  } else if (tab === 'register') {
+    tabs[1].classList.add('active');
+    document.getElementById('auth-register-view').style.display = 'block';
+  } else if (tab === 'token') {
+    tabs[2].classList.add('active');
+    document.getElementById('auth-token-view').style.display = 'block';
+  }
+}
+
+// Prefill Server URL and handle Splash Screen
+window.addEventListener('DOMContentLoaded', () => {
+  const savedApiUrl = localStorage.getItem('cuhi_api_url');
+  if (savedApiUrl) {
+    const urlField = document.getElementById('login-url');
+    if (urlField) urlField.value = savedApiUrl;
+  }
+  
+  // Set correct logo in splash screen
+  const splashLogo = document.getElementById('splash-logo-img');
+  if (splashLogo && savedApiUrl) {
+    splashLogo.src = savedApiUrl + '/logo.jpg';
+  }
+
+  // Premium Delayed Transition for Opening Pulse Animation
+  setTimeout(async () => {
+    try {
+      if (INIT_DATA) {
+        // Test auth by hitting stats endpoint
+        await callApi('GET', '/api/stats');
+        hideSplash();
+      } else {
+        showLoginGate();
+      }
+    } catch(err) {
+      console.warn('Auth validation failed, loading login gate:', err);
+      showLoginGate();
+    }
+  }, 1800);
+});
+
+async function submitLogin() {
+  const url = document.getElementById('login-url').value.trim();
+  const email = document.getElementById('auth-login-email').value.trim();
+  const password = document.getElementById('auth-login-password').value;
+  if (!url || !email || !password) return showToast('⚠️ All fields are required');
+  
+  try {
+    const formattedUrl = url.replace(/\/$/, '');
+    const res = await fetch(formattedUrl + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({detail: 'Invalid credentials'}));
+      throw new Error(err.detail || 'Login failed');
+    }
+    const data = await res.json();
+    localStorage.setItem('cuhi_api_url', formattedUrl);
+    localStorage.setItem('cuhi_app_token', data.token);
+    showToast('✅ Logged in successfully');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
+    setTimeout(() => window.location.reload(), 800);
+  } catch(e) {
+    showToast('❌ ' + e.message);
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'));
+  }
+}
+
+async function submitRegister() {
+  const url = document.getElementById('login-url').value.trim();
+  const name = document.getElementById('auth-reg-name').value.trim();
+  const email = document.getElementById('auth-reg-email').value.trim();
+  const password = document.getElementById('auth-reg-password').value;
+  if (!url || !email || !password) return showToast('⚠️ Email and password are required');
+  
+  try {
+    const formattedUrl = url.replace(/\/$/, '');
+    const res = await fetch(formattedUrl + '/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, first_name: name || undefined })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({detail: 'Registration failed'}));
+      throw new Error(err.detail || 'Registration failed');
+    }
+    const data = await res.json();
+    localStorage.setItem('cuhi_api_url', formattedUrl);
+    localStorage.setItem('cuhi_app_token', data.token);
+    showToast('✅ Account registered successfully');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
+    setTimeout(() => window.location.reload(), 800);
+  } catch(e) {
+    showToast('❌ ' + e.message);
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'));
+  }
+}
+
+async function submitGoogleAuth() {
+  const email = prompt("Enter your Google Account email address:", "user@gmail.com");
+  if (!email || email.trim() === "") return;
+  
+  const name = email.split('@')[0];
+  const googleId = "g_" + Math.random().toString(36).substr(2, 9);
+  
+  const url = document.getElementById('login-url').value.trim();
+  if (!url) return showToast('⚠️ Please enter the Server URL first');
+  
+  try {
+    const formattedUrl = url.replace(/\/$/, '');
+    const res = await fetch(formattedUrl + '/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, google_id: googleId })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({detail: 'Google auth failed'}));
+      throw new Error(err.detail || 'Google sign-in failed');
+    }
+    const data = await res.json();
+    localStorage.setItem('cuhi_api_url', formattedUrl);
+    localStorage.setItem('cuhi_app_token', data.token);
+    showToast('✅ Google Authentication successful');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
+    setTimeout(() => window.location.reload(), 800);
+  } catch(e) {
+    showToast('❌ ' + e.message);
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'));
+  }
+}
+
+async function submitTokenLogin() {
   const url = document.getElementById('login-url').value.trim();
   const token = document.getElementById('login-token').value.trim();
-  if (!url || !token) return alert('Both fields are required.');
+  if (!url || !token) return showToast('⚠️ Both Server URL and App Token are required');
+  
   localStorage.setItem('cuhi_api_url', url.replace(/\/$/, ''));
   localStorage.setItem('cuhi_app_token', token);
-  window.location.reload();
+  showToast('✅ Mobile token configured successfully');
+  (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
+  setTimeout(() => window.location.reload(), 800);
+}
+
+function logoutApp() {
+  if (confirm("Are you sure you want to log out of CuhiBot?")) {
+    localStorage.removeItem('cuhi_app_token');
+    localStorage.removeItem('cuhi_api_url');
+    (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('warning'));
+    window.location.reload();
+  }
 }
 
 // ── Theme System ────────────────────────────────────────────────────────
@@ -742,9 +1109,17 @@ function populateAccount() {
 populateAccount();
 
 async function callApi(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (INIT_DATA) {
+    if (INIT_DATA.startsWith("Bearer ") || (INIT_DATA.length > 30 && !INIT_DATA.includes(":") && !INIT_DATA.includes("hash="))) {
+      headers['Authorization'] = INIT_DATA.startsWith("Bearer ") ? INIT_DATA : `Bearer ${INIT_DATA}`;
+    } else {
+      headers['X-Init-Data'] = INIT_DATA;
+    }
+  }
   const res = await fetch(API_BASE + path, {
     method,
-    headers: { 'Content-Type': 'application/json', 'X-Init-Data': INIT_DATA },
+    headers,
     body: body ? JSON.stringify(body) : undefined
   });
   if (!res.ok) {
@@ -909,28 +1284,46 @@ function getCapFilesystem() {
 // Request storage permission — called at startup AND before every sync
 async function requestStoragePermission() {
   if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return true;
+  
+  let fsGranted = false;
   const cap = getCapFilesystem();
-  if (!cap) return false;
-  try {
-    const status = await cap.Filesystem.checkPermissions();
-    if (status && (status.publicStorage === 'granted' || status.publicStorage === 'prompt-with-rationale')) {
-      if (status.publicStorage !== 'granted') {
+  if (cap) {
+    try {
+      const status = await cap.Filesystem.checkPermissions();
+      if (status && status.publicStorage === 'granted') {
+        fsGranted = true;
+      } else {
         const req = await cap.Filesystem.requestPermissions();
-        return req && req.publicStorage === 'granted';
+        fsGranted = req && req.publicStorage === 'granted';
       }
-      return true;
+    } catch(e) {
+      console.error('Filesystem permission request failed', e);
     }
-    if (status && status.publicStorage === 'denied') {
-      document.getElementById('dl-status-info').textContent = '⚠️ Storage permission denied — enable in phone Settings.';
-      return false;
-    }
-    // 'prompt' — ask now
-    const req = await cap.Filesystem.requestPermissions();
-    return req && req.publicStorage === 'granted';
-  } catch(e) {
-    console.error('Permission check failed', e);
-    return false;
   }
+
+  let mediaGranted = false;
+  const Media = window.Capacitor.Plugins && window.Capacitor.Plugins.Media;
+  if (Media) {
+    try {
+      let status = await Media.checkPermissions();
+      if (status && status.publicStorage === 'granted') {
+        mediaGranted = true;
+      } else {
+        const req = await Media.requestPermissions();
+        mediaGranted = req && req.publicStorage === 'granted';
+      }
+    } catch(e) {
+      console.error('Media permission request failed', e);
+    }
+  } else {
+    mediaGranted = true;
+  }
+
+  const overall = fsGranted && mediaGranted;
+  if (!overall) {
+    document.getElementById('dl-status-info').textContent = '⚠️ Storage / Media permission needed to save files.';
+  }
+  return overall;
 }
 
 // Called once at app boot to request permission proactively
@@ -938,7 +1331,7 @@ async function initNativePermission() {
   if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return;
   const granted = await requestStoragePermission();
   if (!granted) {
-    showToast('⚠️ Storage permission needed to save files');
+    showToast('⚠️ Storage & Media permissions needed to save to gallery');
   }
 }
 
@@ -1175,7 +1568,7 @@ async function loadSources() {
       <div class="cell">
         <div class="cell-body" style="padding-right: 12px;">
           <div class="cell-label" style="font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight: 500;">${s.url}</div>
-          <div class="cell-sub" style="display:flex; align-items:center;">${getPlatformBadge(s.platform)}${s.platform.charAt(0).toUpperCase() + s.platform.slice(1)}</div>
+          <div class="cell-sub" style="display:flex; align-items:center;">${getPlatformBadge(s.platform)}${(s.platform || 'unknown').charAt(0).toUpperCase() + (s.platform || 'unknown').slice(1)}</div>
         </div>
         <button class="remove-btn" onclick="deleteSource('${s.platform}', '${encodeURIComponent(s.url)}')">Remove</button>
       </div>
@@ -1257,7 +1650,7 @@ async function loadHistory() {
       <div class="cell">
         <div class="cell-body">
           <div class="cell-label" style="font-size:16px; font-weight:500;">${h.source || 'Unknown'}</div>
-          <div class="cell-sub">${h.platform.charAt(0).toUpperCase() + h.platform.slice(1)} \u2022 <span style="color:var(--green)">${h.sent || 0} files</span> \u2022 ${h.date || ''}</div>
+          <div class="cell-sub">${(h.platform || 'unknown').charAt(0).toUpperCase() + (h.platform || 'unknown').slice(1)} • <span style="color:var(--green)">${h.sent || 0} files</span> • ${h.date || ''}</div>
         </div>
       </div>
     `).join('');
@@ -1286,7 +1679,7 @@ async function loadSettings() {
     const container = document.getElementById('settings-cookie-status');
     container.innerHTML = cookies.map(c => `
       <div class="cell">
-        <div class="cell-body"><div class="cell-label" style="font-weight:500;">${c.platform.charAt(0).toUpperCase() + c.platform.slice(1)}</div></div>
+        <div class="cell-body"><div class="cell-label" style="font-weight:500;">${(c.platform || 'unknown').charAt(0).toUpperCase() + (c.platform || 'unknown').slice(1)}</div></div>
         <div class="cell-right" style="color:${c.has_cookie ? 'var(--green)' : 'var(--red)'}; font-size:13px; font-weight:700; padding:4px 8px; background:var(--bg-tertiary); border-radius:6px;">
           ${c.has_cookie ? 'ACTIVE' : 'MISSING'}
         </div>
