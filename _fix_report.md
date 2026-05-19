@@ -1,4 +1,35 @@
 # Deep Audit Fix Report — Full Session
+
+## Android App Fix Session (2026-05-20)
+**Model:** Antigravity
+**Files Audited:** `mobile_app/android/variables.gradle`, `mobile_app/www/index.html`
+
+---
+
+## BUGS FOUND: 4  (CRITICAL: 4 | MODERATE: 0 | MINOR: 0)
+## BUGS FIXED: 4
+## VERIFIED: YES — py_compile passes, file verification complete, Capacitor plugins synced
+## REMAINING: NONE
+
+---
+
+## [CRITICAL] Fixes
+
+### C-1 — `compileSdkVersion = 36` and `targetSdkVersion = 36` (variables.gradle:3-4)
+**Root cause:** `compileSdkVersion` and `targetSdkVersion` were set to unreleased API `36`, preventing Android Gradle plugin from compiling the app.
+**Fix:** Downgraded both `compileSdkVersion` and `targetSdkVersion` to stable API `35`.
+
+### C-2 — Outdated index.html (www/index.html)
+**Root cause:** All Android storage permission, Capacitor v6 APIs, and file sync features were updated in the production-served `app.html` file, but `mobile_app/www/index.html` (the local index file packaged inside the Android app) was never synced/updated, leaving the Android app running outdated code without `getCapFilesystem()` and robust permission logic.
+**Fix:** Overwrote `mobile_app/www/index.html` with the verified contents of `app.html` to bring the web client fully in sync and activate native Capacitor v6 filesystem integration.
+
+### C-3 — Downloads not showing in device Gallery (app.html & www/index.html)
+**Root cause:** The Capacitor `Filesystem` plugin writes downloaded media to `Directory.Documents`, which is a private/scoped app folder on Android 11+. The Android system MediaStore scanner does not index this folder for media, preventing downloaded images and videos from appearing in the user's native Gallery/Photos app.
+**Fix:** Installed `@capacitor-community/media`, synchronized native Android build files (`npx cap sync`), and integrated standard photo/video saving code into both `app.html` and `index.html`. It automatically creates a custom "CuhiBot" album in the device gallery and writes new files directly to it.
+
+---
+
+# Previous Sessions
 **Date:** 2026-05-15
 **Model:** Claude Sonnet (Thinking)
 **Files Audited:** bot.py (2340 lines), server.py (515 lines), mobile_app/www/index.html (1184 lines), AndroidManifest.xml, variables.gradle, capacitor.config.json

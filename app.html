@@ -996,6 +996,62 @@ async function syncNativeFiles() {
           recursive: true
         });
 
+        // ── Save to device Gallery/Photos ─────────────────────────────────────
+        try {
+          const Media = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Media;
+          if (Media) {
+            const ext = file.path.split('.').pop().toLowerCase();
+            let mime = 'image/jpeg';
+            let isVid = false;
+            if (['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp'].includes(ext)) {
+              mime = 'video/' + (ext === 'mov' ? 'quicktime' : ext);
+              isVid = true;
+            } else if (ext === 'png') {
+              mime = 'image/png';
+            } else if (ext === 'gif') {
+              mime = 'image/gif';
+            } else if (ext === 'webp') {
+              mime = 'image/webp';
+            }
+            const dataUri = `data:${mime};base64,${base64}`;
+
+            // Find or create album 'CuhiBot'
+            let albumId = null;
+            try {
+              const { albums } = await Media.getAlbums();
+              const existing = albums.find(a => a.name.toLowerCase() === 'cuhibot');
+              if (existing) {
+                albumId = existing.identifier;
+              } else {
+                await Media.createAlbum({ name: 'CuhiBot' });
+                const { albums: newAlbums } = await Media.getAlbums();
+                const created = newAlbums.find(a => a.name.toLowerCase() === 'cuhibot');
+                if (created) albumId = created.identifier;
+              }
+            } catch(albumErr) {
+              console.error('Error with album setup', albumErr);
+            }
+
+            const fileNameNoExt = file.path.split('/').pop().replace(/\.[^/.]+$/, "");
+            const saveOpts = {
+              path: dataUri,
+              fileName: fileNameNoExt
+            };
+            if (albumId) {
+              saveOpts.albumIdentifier = albumId;
+            }
+
+            if (isVid) {
+              await Media.saveVideo(saveOpts);
+            } else {
+              await Media.savePhoto(saveOpts);
+            }
+            console.log('Successfully saved to device Gallery:', file.path);
+          }
+        } catch(mediaErr) {
+          console.error('Failed to save to device gallery:', file.path, mediaErr);
+        }
+
         // Remove from server only after confirmed local write
         await callApi('DELETE', '/api/files/' + file.path.split('/').map(encodeURIComponent).join('/'));
         saved++;
