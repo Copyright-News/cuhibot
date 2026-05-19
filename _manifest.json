@@ -1,5 +1,5 @@
 {
-  "task": "Optimize keyboard responsiveness, real Google sign-in modal, Android 13+ permissions, and smart settings visibility",
+  "task": "Push stable release tag v2.1.0 and synchronize GitHub releases with premium assets/logo",
   "workspace": "cuhibot",
   "original_model": "Gemini 3.5 Flash",
   "current_model": "Antigravity",
@@ -9,5 +9,5 @@
   "next_part": null,
   "next_function": null,
   "status": "complete",
-  "style_notes": "Synchronized app.html changes (optimized keyboard layout, realistic Google Account modal chooser, dynamic settings visibility, and lenient Android 11+/13+ storage permissions) into mobile_app/www/index.html and verified via Capacitor sync android."
+  "style_notes": "Successfully created and pushed the v2.1.0 git tag to https://github.com/Copyright-News/cuhibot.git. This synchronizes the GitHub releases and tags section with the premium logo, Scoped Storage improvements, Google Auth account chooser, and keyboard viewport optimizations."
 }
