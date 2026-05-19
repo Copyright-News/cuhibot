@@ -930,13 +930,13 @@ function switchAuthTab(tab) {
   document.getElementById('auth-token-view').style.display = 'none';
   
   if (tab === 'login') {
-    tabs[0].classList.add('active');
+    if (tabs[0]) tabs[0].classList.add('active');
     document.getElementById('auth-login-view').style.display = 'block';
   } else if (tab === 'register') {
-    tabs[1].classList.add('active');
+    if (tabs[1]) tabs[1].classList.add('active');
     document.getElementById('auth-register-view').style.display = 'block';
   } else if (tab === 'token') {
-    tabs[2].classList.add('active');
+    if (tabs[2]) tabs[2].classList.add('active');
     document.getElementById('auth-token-view').style.display = 'block';
   }
 }
