@@ -1,3 +1,25 @@
+import groovy.json.JsonSlurper
+
+def getPackageVersion() {
+    def inputFile = new File(projectDir, "../../package.json")
+    if (inputFile.exists()) {
+        def packageJson = new JsonSlurper().parseText(inputFile.text)
+        return packageJson.version
+    }
+    return "1.0.0"
+}
+
+def getPackageVersionCode() {
+    def inputFile = new File(projectDir, "../../package.json")
+    if (inputFile.exists()) {
+        def packageJson = new JsonSlurper().parseText(inputFile.text)
+        if (packageJson.versionCode != null) {
+            return packageJson.versionCode as Integer
+        }
+    }
+    return 1
+}
+
 apply plugin: 'com.android.application'
 
 android {
@@ -7,8 +29,8 @@ android {
         applicationId "com.cuhibot.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "2.0.3"
+        versionCode getPackageVersionCode()
+        versionName getPackageVersion()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

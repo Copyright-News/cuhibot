@@ -1,6 +1,7 @@
 {
   "name": "mobile_app",
   "version": "1.0.0",
+  "versionCode": 1,
   "description": "",
   "main": "index.js",
   "scripts": {
