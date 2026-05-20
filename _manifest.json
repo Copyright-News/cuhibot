@@ -1,5 +1,5 @@
 {
-  "task": "Dynamically synchronize Capacitor Android app versioning with package.json",
+  "task": "Clean up dead code and fix backend authentication compilation issues",
   "workspace": "cuhibot",
   "original_model": "Gemini 3.5 Flash",
   "current_model": "Gemini 3.5 Flash",
@@ -9,5 +9,5 @@
   "next_part": null,
   "next_function": null,
   "status": "complete",
-  "style_notes": "Gradle now parses versionCode and versionName dynamically from package.json on every build. Versioning is centralized."
+  "style_notes": "Authentication endpoints, models, and unused active download processes trackers are completely cleaned up. Compiles flawlessly."
 }

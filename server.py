@@ -10,24 +10,19 @@ Fixes vs v1:
   - /api/stats: richer response (username, cookies_active, files_sent, etc.)
 """
 
-import asyncio
 import hashlib
 import hmac
 import json
 import logging
 import os
-import random
-import secrets
 import shutil
 import urllib.parse
-from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 # ── Config ────────────────────────────────────────────────────────────
@@ -49,7 +44,6 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("cuhi.server")
 
 # ── Auth & Session Store ──────────────────────────────────────────────
-USERS_FILE = DATA_ROOT / "users.json"
 SESSIONS_FILE = DATA_ROOT / "sessions.json"
 
 def read_json_direct(path: Path, default=None):
@@ -66,34 +60,10 @@ def write_json_direct(path: Path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
-def get_users() -> dict:
-    return read_json_direct(USERS_FILE, default={})
-
-def save_users(users: dict):
-    write_json_direct(USERS_FILE, users)
-
 def get_sessions() -> dict:
     return read_json_direct(SESSIONS_FILE, default={})
 
-def save_sessions(sessions: dict):
-    write_json_direct(SESSIONS_FILE, sessions)
-
-def hash_password(password: str, salt: str) -> str:
-    return hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
-
-def create_session(uid: int, email: str, name: str) -> str:
-    token = secrets.token_hex(24)
-    sessions = get_sessions()
-    sessions[token] = {
-        "id": uid,
-        "email": email,
-        "first_name": name,
-        "username": email.split("@")[0],
-    }
-    save_sessions(sessions)
-    return token
-
-def validate_token(token: str) -> Optional[dict]:
+def validate_token(token: str) -> dict | None:
     sessions = get_sessions()
     return sessions.get(token)
 
@@ -262,21 +232,6 @@ def get_active_cookies(uid: int) -> list[str]:
 
 # ── Pydantic models ───────────────────────────────────────────────────
 
-class RegisterRequest(BaseModel):
-    email: str
-    password: str
-    first_name: Optional[str] = None
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
-class GoogleRequest(BaseModel):
-    email: str
-    name: Optional[str] = None
-    google_id: str
-    photo_url: Optional[str] = None
-
 class SourceAdd(BaseModel):
     url: str
     platform: str = "instagram"
@@ -299,9 +254,6 @@ class ScheduleSet(BaseModel):
     cron: str
     enabled: bool = True
 
-# ── Active downloads tracker ──────────────────────────────────────────
-_active_procs: dict[int, asyncio.subprocess.Process] = {}
-
 # ── FastAPI app ───────────────────────────────────────────────────────
 app = FastAPI(docs_url=None, redoc_url=None)
 
@@ -312,118 +264,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Auth Endpoints ────────────────────────────────────────────────────
 
-@app.post("/api/auth/register")
-async def auth_register(body: RegisterRequest):
-    email = body.email.strip().lower()
-    if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Invalid email format")
-    if len(body.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-    
-    users = get_users()
-    if email in users:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Generate unique UID
-    while True:
-        uid = random.randint(9999000000, 9999999999)
-        uid_exists = any(u.get("id") == uid for u in users.values())
-        if not uid_exists:
-            break
-            
-    salt = secrets.token_hex(8)
-    pw_hash = hash_password(body.password, salt)
-    
-    users[email] = {
-        "id": uid,
-        "email": email,
-        "first_name": body.first_name or email.split("@")[0],
-        "password_hash": pw_hash,
-        "salt": salt,
-        "auth_type": "email"
-    }
-    save_users(users)
-    
-    token = create_session(uid, email, users[email]["first_name"])
-    return {
-        "status": "success",
-        "token": token,
-        "user": {
-            "id": uid,
-            "email": email,
-            "first_name": users[email]["first_name"]
-        }
-    }
-
-@app.post("/api/auth/login")
-async def auth_login(body: LoginRequest):
-    email = body.email.strip().lower()
-    users = get_users()
-    if email not in users:
-        raise HTTPException(status_code=400, detail="Invalid email or password")
-    
-    user = users[email]
-    if user.get("auth_type") != "email":
-        raise HTTPException(status_code=400, detail="This account uses a different login method")
-        
-    pw_hash = hash_password(body.password, user["salt"])
-    if pw_hash != user["password_hash"]:
-        raise HTTPException(status_code=400, detail="Invalid email or password")
-        
-    token = create_session(user["id"], email, user["first_name"])
-    return {
-        "status": "success",
-        "token": token,
-        "user": {
-            "id": user["id"],
-            "email": email,
-            "first_name": user["first_name"]
-        }
-    }
-
-@app.post("/api/auth/google")
-async def auth_google(body: GoogleRequest):
-    email = body.email.strip().lower()
-    if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Invalid email format")
-        
-    users = get_users()
-    if email in users:
-        user = users[email]
-        if user.get("auth_type") == "email":
-            # Upgrade / link to Google
-            user["auth_type"] = "google"
-            user["google_id"] = body.google_id
-            save_users(users)
-    else:
-        # Register new Google user
-        while True:
-            uid = random.randint(9999000000, 9999999999)
-            uid_exists = any(u.get("id") == uid for u in users.values())
-            if not uid_exists:
-                break
-        users[email] = {
-            "id": uid,
-            "email": email,
-            "first_name": body.name or email.split("@")[0],
-            "google_id": body.google_id,
-            "auth_type": "google"
-        }
-        save_users(users)
-        
-    user = users[email]
-    token = create_session(user["id"], email, user["first_name"])
-    return {
-        "status": "success",
-        "token": token,
-        "user": {
-            "id": user["id"],
-            "email": email,
-            "first_name": user["first_name"]
-        }
-    }
 
 # ── Static ────────────────────────────────────────────────────
 
@@ -456,8 +297,7 @@ async def stats(user: dict = Depends(get_user)):
     files_sent    = s.get("files_sent", 0)
     downloaded_mb = s.get("downloaded_mb", 0)
 
-    proc = _active_procs.get(uid)
-    running = proc is not None and proc.returncode is None
+    running = (user_dir(uid) / "download_running").exists()
 
     return {
         "sources":        sources_count,
@@ -592,8 +432,7 @@ async def set_schedule(body: ScheduleSet, uid: int = Depends(get_uid)):
 
 @app.post("/api/download")
 async def trigger_download(body: DownloadTrigger, uid: int = Depends(get_uid)):
-    proc = _active_procs.get(uid)
-    if proc and proc.returncode is None:
+    if (user_dir(uid) / "download_running").exists():
         raise HTTPException(409, "Download already running")
 
     # Write trigger file — bot.py polls this and starts the actual download
@@ -617,11 +456,6 @@ async def stop_download(uid: int = Depends(get_uid)):
     # Write stop flag — bot.py checks this
     (user_dir(uid) / "stop_flag").touch()
 
-    proc = _active_procs.get(uid)
-    if proc and proc.returncode is None:
-        proc.terminate()
-        _active_procs.pop(uid, None)
-
     # Remove running flag
     running_flag = user_dir(uid) / "download_running"
     if running_flag.exists():
@@ -631,10 +465,8 @@ async def stop_download(uid: int = Depends(get_uid)):
 
 @app.get("/api/download/status")
 async def download_status(uid: int = Depends(get_uid)):
-    proc = _active_procs.get(uid)
-    proc_running = proc is not None and proc.returncode is None
     flag_running = (user_dir(uid) / "download_running").exists()
-    return {"running": proc_running or flag_running}
+    return {"running": flag_running}
 
 # ── Disk (always real-time) ───────────────────────────────────────────
 
