@@ -15,6 +15,18 @@ import hmac
 import json
 import logging
 import os
+# Load .env file manually if exists (no-dependency dotenv fallback)
+try:
+    from pathlib import Path as _EnvPath
+    _env_path = _EnvPath(__file__).parent / ".env"
+    if _env_path.exists():
+        for _line in _env_path.read_text(encoding="utf-8").splitlines():
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ[_k.strip()] = _v.strip().strip('"').strip("'")
+except Exception:
+    pass
 import shutil
 import urllib.parse
 from pathlib import Path
