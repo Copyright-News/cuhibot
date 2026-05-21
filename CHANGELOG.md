@@ -4,6 +4,21 @@ This is the history of every major fix and feature added to **Cuhi Bot**. We try
 
 ---
 
+## [2.1.0] Security Hardening and Deep Audit Bug Fixes — 2026-05-21
+
+### Security & Architecture Hardening
+- **Secure Capacitor Auth**: Deprecated stateless HMAC token generation in favor of cryptographically secure random session tokens (`secrets.token_hex(32)`) prefixed with `cuhi_session_token_`, completely eliminating `BOT_TOKEN` leak vulnerabilities.
+- **Tight CORS Restrictions**: Replaced wildcard `allow_origins=["*"]` with explicit allowed origins mapping localhost, `PUBLIC_DOMAIN`, and dynamic subdomains matching `https://*.github.io` to ensure robust origin isolation.
+- **Advisory File Lock Enforcement**: Wrapped all file-based operations targeting settings, profiles, queues, and cookie writes inside cooperative, thread-safe `locked_file` blocks.
+- **Static Assets completeness in Docker**: Copied `logo.jpg` and all static resources directly into the production Docker build container to prevent served static assets returning 404 errors.
+
+### Local Tooling & Repo Hygiene
+- **Restored Local Development Tooling**: Rebuilt and restored the Windows local quickstart runner `run_local.bat` and log parser `update_env.py` to automate Cloudflare Tunnel subdomain detection and `.env` parsing.
+- **Clean Git Index**: Excluded and purged `node_modules` from Git history, standardizing dependencies to clean builds.
+- **CI Workflows**: Configured high-coverage testing workflows (`test.yml`) running automated test suites on push and PR.
+
+---
+
 ## [2.0.1] Deep Bug Scan Fixes — 2026-05-08
 
 ### Critical & Moderate Bug Fixes
