@@ -395,8 +395,153 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
   transition: transform 0.15s ease;
   margin-top: 10px;
 }
-.auth-btn:active {
-  transform: scale(0.98);
+
+/* ── Premium Redesigned Login Gate ── */
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes pulse1 { from { opacity: .4; transform: translateX(-50%) scale(1); } to { opacity: .8; transform: translateX(-50%) scale(1.15); } }
+@keyframes pulse2 { from { opacity: .3; transform: scale(1); } to { opacity: .7; transform: scale(1.2); } }
+@keyframes pulse3 { from { opacity: .3; transform: scale(1); } to { opacity: .6; transform: scale(1.1) translate(20px, -20px); } }
+
+#gate {
+  background: var(--bg);
+  transition: background 0.3s ease;
+}
+.gate-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+}
+body.theme-light .gate-ambient {
+  opacity: 0.15;
+  filter: saturate(0.5);
+}
+.gate-glow-1 {
+  position: absolute; width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(191,90,242,0.18) 0%, transparent 65%);
+  top: -200px; left: 50%; transform: translateX(-50%); filter: blur(40px);
+  animation: pulse1 8s ease-in-out infinite alternate;
+}
+.gate-glow-2 {
+  position: absolute; width: 400px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(10,132,255,0.12) 0%, transparent 65%);
+  bottom: -100px; right: -80px; filter: blur(50px);
+  animation: pulse2 11s ease-in-out infinite alternate;
+}
+.gate-glow-3 {
+  position: absolute; width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,55,95,0.1) 0%, transparent 65%);
+  bottom: 100px; left: -60px; filter: blur(50px);
+  animation: pulse3 9s ease-in-out infinite alternate;
+}
+.gate-logo-outer {
+  width: 76px; height: 76px; border-radius: 20px; padding: 2px;
+  background: linear-gradient(135deg, #bf5af2, #0a84ff, #ff375f);
+  box-shadow: 0 0 20px rgba(191,90,242,0.25), 0 8px 20px rgba(0,0,0,0.4);
+  margin-bottom: 16px; animation: logoFloat 6s ease-in-out infinite;
+}
+body.theme-light .gate-logo-outer {
+  box-shadow: 0 0 15px rgba(191,90,242,0.15), 0 4px 12px rgba(0,0,0,0.15);
+}
+.gate-logo-inner {
+  width: 100%; height: 100%; border-radius: 18px; overflow: hidden;
+  border: 1.5px solid #000; background: #000;
+}
+body.theme-light .gate-logo-inner {
+  border-color: var(--separator);
+}
+.gate-form-card {
+  width: 100%; max-width: 340px;
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+body.theme-light .gate-form-card {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+.gate-form-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  border-bottom: 0.5px solid var(--separator);
+  transition: background 0.15s;
+}
+.gate-form-row:last-child { border-bottom: none; }
+.gate-form-row:active { background: rgba(255,255,255,0.02); }
+body.theme-light .gate-form-row:active { background: rgba(0,0,0,0.02); }
+
+.gate-row-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.gate-row-icon.ri-blue { background: linear-gradient(135deg, #0a84ff, #5e5ce6); }
+.gate-row-icon.ri-purple { background: linear-gradient(135deg, #bf5af2, #5e5ce6); }
+
+.gate-row-body { flex: 1; min-width: 0; text-align: left; }
+.gate-row-lbl {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 2px;
+}
+.gate-row-input {
+  background: transparent; border: none; outline: none; width: 100%;
+  font-size: 14px; font-weight: 400; color: var(--text); caret-color: var(--blue);
+  font-family: var(--font);
+}
+.gate-row-input::placeholder { color: var(--text-tertiary); }
+
+.gate-eye-btn {
+  flex-shrink: 0; width: 28px; height: 28px; display: flex; align-items: center;
+  justify-content: center; border-radius: 6px; cursor: pointer; transition: background 0.15s;
+}
+.gate-eye-btn:hover { background: rgba(255,255,255,0.05); }
+body.theme-light .gate-eye-btn:hover { background: rgba(0,0,0,0.05); }
+
+.gate-cta {
+  width: 100%; height: 50px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
+  color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+  position: relative; overflow: hidden; display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+  box-shadow: 0 8px 24px rgba(10,132,255,0.25), 0 2px 8px rgba(0,0,0,0.3);
+  transition: all 0.15s ease;
+  font-family: var(--font);
+}
+.gate-cta::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: skewX(-20deg);
+  animation: ctaShimmer 4s ease-in-out infinite 2s;
+}
+@keyframes ctaShimmer { 0% { left: -100%; } 60% { left: 150%; } 100% { left: 150%; } }
+.gate-cta:hover { transform: translateY(-1px); filter: brightness(1.08); }
+.gate-cta:active { transform: scale(0.985); filter: brightness(0.94); }
+
+.theme-segmented-control {
+  display: flex; background: rgba(255, 255, 255, 0.05); padding: 3px;
+  border-radius: 9px; border: 0.5px solid var(--separator); width: 220px; margin: 0 auto;
+}
+body.theme-light .theme-segmented-control {
+  background: rgba(0, 0, 0, 0.04);
+}
+.theme-seg-btn {
+  flex: 1; border: none; background: transparent; color: var(--text-secondary);
+  padding: 6px 0; font-size: 12px; font-weight: 600; border-radius: 7px;
+  cursor: pointer; transition: all 0.2s ease; font-family: var(--font);
+}
+.theme-seg-btn.active {
+  background: var(--bg-secondary); color: var(--text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+body.theme-light .theme-seg-btn.active {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 </style>
@@ -414,31 +559,89 @@ body.theme-light #toast { background: rgba(255,255,255,0.92); color: #000; borde
 </div>
 
 <!-- ── Tabbed Login Gate ── -->
-<div id="gate" style="display:none; position:fixed; inset:0; background:linear-gradient(135deg, #14121F 0%, #0D0B14 100%); z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; padding:24px 24px 60px 24px; text-align:center; overflow-y:auto; box-sizing:border-box;-webkit-overflow-scrolling:touch;">
-  <div style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px; margin:auto 0;">
-    <div style="width:68px; height:68px; border-radius:50%; border:2px solid var(--blue); overflow:hidden; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,198,251,0.25); background:#000;">
-      <img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2300c6fb\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/></svg>'">
-    </div>
-    <h1 style="font-family:'Outfit', sans-serif; font-size:22px; font-weight:800; margin:0 0 4px 0; color:#fff;">Welcome to Cuhi</h1>
-    <p style="font-size:12px; color:rgba(255,255,255,0.4); margin:0 0 16px 0;">Sign in to access your media downloads</p>
+<div id="gate" style="display:none; position:fixed; inset:0; z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; padding:24px 24px 34px 24px; text-align:center; overflow-y:auto; box-sizing:border-box;-webkit-overflow-scrolling:touch;">
+  <!-- Ambient glows -->
+  <div class="gate-ambient">
+    <div class="gate-glow-1"></div>
+    <div class="gate-glow-2"></div>
+    <div class="gate-glow-3"></div>
+  </div>
 
-    <!-- Server Connection URL -->
-    <div style="width:100%; margin-bottom:10px; text-align:left;">
-      <input type="url" id="login-url" class="auth-input" placeholder="Server URL (https://...)" style="text-align:center;">
-    </div>
-
-    <!-- Main Container -->
-    <div class="auth-container">
-      <!-- Telegram Token Login Form -->
-      <div id="auth-token-view">
-        <div class="form-group">
-          <label class="form-label" style="text-transform: uppercase; font-size: 11px; font-weight: 700; color: var(--blue); letter-spacing: 0.5px; margin-bottom: 6px; display: block; text-align: left;">Secure App Token</label>
-          <input type="text" id="login-token" class="auth-input" placeholder="UID:HMAC (from Telegram bot)" style="text-align: center;">
-        </div>
-        <button class="auth-btn" onclick="submitTokenLogin()">Verify & Connect</button>
-        <p style="color:rgba(255,255,255,0.4); font-size:11.5px; margin-top:14px; line-height:1.4; text-align: left;">Send <code style="background:rgba(255,255,255,0.06); padding:2px 4.5px; border-radius:4px; font-family:monospace; color:var(--blue);">/app</code> to the Telegram bot to generate your secure authentication token.</p>
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:340px; margin:auto 0; position:relative; z-index:1;">
+    <!-- Logo outer float & glow -->
+    <div class="gate-logo-outer">
+      <div class="gate-logo-inner">
+        <img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2300c6fb\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\'/></svg>'">
       </div>
     </div>
+    
+    <h1 style="font-family:'Outfit', sans-serif; font-size:32px; font-weight:800; letter-spacing:-0.8px; color:var(--text); text-align:center; line-height:1.1; margin-bottom:6px;">Welcome</h1>
+    <p style="font-size:14px; font-weight:400; color:var(--text-secondary); text-align:center; margin-bottom:24px;">Sign in to access your media downloads</p>
+
+    <!-- iOS Form Card -->
+    <div class="gate-form-card">
+      <!-- Server Connection URL -->
+      <div class="gate-form-row">
+        <div class="gate-row-icon ri-blue">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </div>
+        <div class="gate-row-body">
+          <div class="gate-row-lbl">Enter the server URL</div>
+          <input type="url" id="login-url" class="gate-row-input" placeholder="https://your-server.trycloudflare.com">
+        </div>
+      </div>
+
+      <!-- Secure App Token -->
+      <div class="gate-form-row">
+        <div class="gate-row-icon ri-purple">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+          </svg>
+        </div>
+        <div class="gate-row-body">
+          <div class="gate-row-lbl">Auth Token</div>
+          <input type="password" id="login-token" class="gate-row-input" placeholder="UID:HMAC from Telegram">
+        </div>
+        <div class="gate-eye-btn" onclick="toggleTokenVisibility()">
+          <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verify & Connect CTA -->
+    <div style="width:100%; margin-top:8px;">
+      <button class="gate-cta" onclick="submitTokenLogin()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Verify & Connect
+      </button>
+    </div>
+
+    <p style="color:var(--text-secondary); font-size:11px; margin-top:14px; line-height:1.4; text-align:center; max-width:300px;">Send <code style="background:rgba(255,255,255,0.06); padding:2px 4.5px; border-radius:4px; font-family:monospace; color:var(--blue);">/app</code> to the Telegram bot to generate your secure authentication token.</p>
+
+    <!-- Theme selection control (Dark / Light / System) -->
+    <div class="theme-selector-container" style="margin-top:28px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+      <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-tertiary); letter-spacing:1px;">App Theme</span>
+      <div class="theme-segmented-control">
+        <button type="button" onclick="setTheme('dark')" id="theme-btn-dark" class="theme-seg-btn">Dark</button>
+        <button type="button" onclick="setTheme('light')" id="theme-btn-light" class="theme-seg-btn">Light</button>
+        <button type="button" onclick="setTheme('auto')" id="theme-btn-auto" class="theme-seg-btn">System</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Homebar safe area -->
+  <div class="homebar" style="margin-top:auto; height:34px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:8px; width:100%; pointer-events:none;">
+    <div class="home-pill" style="width:134px; height:5px; background:rgba(255,255,255,0.2); border-radius:3px;"></div>
   </div>
 </div>
 
@@ -858,6 +1061,18 @@ function detectTelegramTheme() {
   return 'dark';
 }
 
+function toggleTokenVisibility() {
+  const tokenInput = document.getElementById('login-token');
+  const eyeIcon = document.getElementById('eye-icon');
+  if (tokenInput.type === 'password') {
+    tokenInput.type = 'text';
+    eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+  } else {
+    tokenInput.type = 'password';
+    eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+  }
+}
+
 function applyTheme(mode) {
   document.body.classList.remove('theme-light');
   if (mode === 'light') {
@@ -865,6 +1080,28 @@ function applyTheme(mode) {
   } else if (mode === 'auto') {
     if (detectTelegramTheme() === 'light') document.body.classList.add('theme-light');
   }
+  
+  // Sync the settings select if it exists
+  const sel = document.getElementById('set-theme');
+  if (sel) sel.value = mode;
+
+  // Sync the login gate segment control buttons if they exist
+  ['dark', 'light', 'auto'].forEach(m => {
+    const btn = document.getElementById('theme-btn-' + m);
+    if (btn) {
+      if (m === mode) {
+        btn.classList.add('active');
+        btn.style.background = 'var(--bg-secondary)';
+        btn.style.color = 'var(--text)';
+        btn.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+      } else {
+        btn.classList.remove('active');
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-secondary)';
+        btn.style.boxShadow = 'none';
+      }
+    }
+  });
 }
 
 function setTheme(mode) {
@@ -1065,9 +1302,10 @@ async function updateHomeStats() {
     
   } catch(e) { console.error('Poll error', e); }
   
-  // [FIXED] Only sync when a download is actually running — prevents
-  // infinite empty polls and duplicate gallery saves from stale server files
-  if (isNativeApp && stats.download_running) {
+  // [FIXED] Sync if download is running OR if there are files waiting on the server.
+  // This guarantees all files are saved to the device even after the download ceases,
+  // and recovers unsynced files when the app is restarted.
+  if (isNativeApp && (stats.download_running || (stats.files_waiting && stats.files_waiting > 0))) {
     syncNativeFiles();
   }
 }

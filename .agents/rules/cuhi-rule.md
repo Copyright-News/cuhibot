@@ -210,3 +210,9 @@ When all parts are complete, before touching bot.py:
 - No missing imports
 
 Only after all checks pass, write the final bot.py.
+
+## RULE 11 — HTML SYNC CONSISTENCY
+- Ensure that `app.html`, `index.html`, and `mobile_app/www/index.html` are always identical copies.
+- When updating the UI, edit `app.html` as the source of truth, then sync the other two files.
+- Automate this sync in the deployment process to avoid divergence.
+- Document any future structural changes in this rule.
