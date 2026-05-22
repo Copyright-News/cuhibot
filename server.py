@@ -423,6 +423,7 @@ app = FastAPI(docs_url=None, redoc_url=None)
 # Build dynamic allowed origins list
 allowed_origins = [
     "http://localhost",
+    "https://localhost",
     "capacitor://localhost",
     "http://localhost:5173",
     "http://localhost:8080",
@@ -548,12 +549,15 @@ async def add_source(body: SourceAdd, uid: int = Depends(get_uid)):
 
 @app.delete("/api/sources/{platform}/{url:path}")
 async def delete_source(platform: str, url: str, uid: int = Depends(get_uid)):
+    plat = platform.lower()
+    if plat not in PLATFORMS:
+        raise HTTPException(400, f"Unknown platform: {plat}")
     decoded = urllib.parse.unquote(url)
-    urls = read_profiles(uid, platform)
+    urls = read_profiles(uid, plat)
     if decoded not in urls:
         raise HTTPException(404, "Source not found")
     urls.remove(decoded)
-    write_profiles(uid, platform, urls)
+    write_profiles(uid, plat, urls)
     return {"deleted": decoded}
 
 
@@ -785,8 +789,8 @@ async def get_file(file_path: str, uid: int = Depends(get_uid)):
 
     # Security: prevent directory traversal
     try:
-        target.resolve().relative_to(dl_dir.resolve())
-    except (ValueError, FileNotFoundError, OSError):
+        target.resolve(strict=False).relative_to(dl_dir.resolve(strict=False))
+    except (ValueError, OSError):
         raise HTTPException(403, "Access denied")
 
     if not target.exists() or not target.is_file():

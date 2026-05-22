@@ -141,6 +141,23 @@ class TestCuhiBot(unittest.TestCase):
         self.assertEqual(cron_map.get("24h"), "0 0 * * *")
         self.assertEqual(cron_map.get("off"), "")
 
+    def test_server_allowed_origins_and_platform_validation(self):
+        # Verify https://localhost is in allowed_origins
+        self.assertIn("https://localhost", server.allowed_origins)
+
+        # Mocking delete_source to verify validation raises HTTPException(400) for invalid platform
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            from fastapi import HTTPException
+            with self.assertRaises(HTTPException) as ctx:
+                loop.run_until_complete(server.delete_source("invalid_platform", "https://instagram.com/user", 12345))
+            self.assertEqual(ctx.exception.status_code, 400)
+            self.assertIn("Unknown platform", ctx.exception.detail)
+        finally:
+            loop.close()
+
     def test_html_mirrors_sync(self):
         # Read app.html, index.html, and mobile_app/www/index.html
         # from the actual repository to check if they are identical.
