@@ -1100,18 +1100,30 @@ async function submitTokenLogin() {
   
   const normalizedUrl = url.replace(/\/$/, '');
   showToast('⏳ Validating token with server...');
+  
+  // Add timeout to prevent infinite loading
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (token.startsWith("Bearer ") || (token.length > 30 && !token.includes(":") && !token.includes("hash="))) {
       headers['Authorization'] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+      console.log('Using Authorization header with Bearer token');
     } else {
       headers['X-Init-Data'] = token;
+      console.log('Using X-Init-Data header');
     }
 
+    console.log('Sending request to:', `${normalizedUrl}/api/stats`);
     const res = await fetch(`${normalizedUrl}/api/stats`, {
       method: 'GET',
-      headers: headers
+      headers: headers,
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
+    console.log('Response status:', res.status);
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({detail: `Error ${res.status}`}));
@@ -1119,6 +1131,8 @@ async function submitTokenLogin() {
     }
 
     const stats = await res.json();
+    console.log('Stats received:', stats);
+    
     if (!stats || typeof stats !== 'object') {
       throw new Error('Invalid response structure');
     }
@@ -1129,7 +1143,16 @@ async function submitTokenLogin() {
     (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'));
     setTimeout(() => window.location.reload(), 800);
   } catch (err) {
-    showToast(`❌ Connection failed: ${err.message || err}`);
+    clearTimeout(timeoutId);
+    console.error('Login error:', err);
+    
+    if (err.name === 'AbortError') {
+      showToast('❌ Request timed out - server not responding');
+    } else if (err.message.includes('Failed to fetch')) {
+      showToast('❌ Cannot reach server - check URL and network');
+    } else {
+      showToast(`❌ Connection failed: ${err.message || err}`);
+    }
     (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'));
   }
 }
