@@ -1382,7 +1382,11 @@ async function updateHomeStats() {
     document.getElementById('home-channel').textContent = stats.channel || 'Not configured';
     
     document.getElementById('active-download-banner').classList.toggle('show', stats.download_running);
-    document.getElementById('btn-start-dl').style.display = stats.download_running ? 'none' : 'flex';
+    if (!isStartingDownload) {
+      document.getElementById('btn-start-dl').style.display = stats.download_running ? 'none' : 'flex';
+      document.getElementById('btn-start-dl').disabled = false;
+      document.getElementById('btn-start-dl').innerHTML = 'Start Download';
+    }
     document.getElementById('btn-stop-dl').style.display = stats.download_running ? 'flex' : 'none';
     document.getElementById('dl-status-info').textContent = stats.download_running ? 'Download in progress...' : 'System Ready';
 
@@ -1670,32 +1674,38 @@ function startHomePolling() {
 
 // ── Pull-to-Refresh ───────────────────────────────────────────────────
 function addPullToRefresh(pageEl, onRefresh) {
+  // Wrap existing children in ptr-content-wrapper
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ptr-content-wrapper';
+  wrapper.style.cssText = 'position:relative;width:100%;min-height:100%;transform:translate3d(0,0,0);will-change:transform;transition:transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);';
+  
+  while (pageEl.firstChild) {
+    wrapper.appendChild(pageEl.firstChild);
+  }
+  pageEl.appendChild(wrapper);
+  
+  // Create indicator
+  const indicator = document.createElement('div');
+  indicator.className = 'ptr-indicator';
+  indicator.style.cssText = 'position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:center;z-index:50;pointer-events:none;transform:translate3d(0,-50px,0);will-change:transform;transition:transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);';
+  indicator.innerHTML = `
+    <svg class="ptr-spinner-svg" viewBox="0 0 28 28">
+      <circle class="ptr-spinner-track" cx="14" cy="14" r="12"></circle>
+      <circle class="ptr-spinner-circle" cx="14" cy="14" r="12"></circle>
+    </svg>
+  `;
+  pageEl.insertBefore(indicator, wrapper);
+
   let startY = 0;
   let pulling = false;
-  let indicator = null;
-
-  function getOrCreateIndicator() {
-    let el = pageEl.querySelector('.ptr-indicator');
-    if (!el) {
-      el = document.createElement('div');
-      el.className = 'ptr-indicator';
-      el.style.cssText = [
-        'position:sticky', 'top:0', 'left:0', 'right:0', 'height:0',
-        'display:flex', 'align-items:center', 'justify-content:center',
-        'overflow:hidden', 'transition:height 0.2s ease',
-        'background:var(--bg)', 'z-index:50', 'font-size:13px',
-        'color:var(--text-secondary)', 'font-weight:600', 'gap:8px'
-      ].join(';');
-      el.innerHTML = '<span style="display:inline-block;animation:spin 0.8s linear infinite">↻</span> Refreshing...';
-      pageEl.insertBefore(el, pageEl.firstChild);
-    }
-    return el;
-  }
+  let currentY = 0;
 
   pageEl.addEventListener('touchstart', (e) => {
     if (pageEl.scrollTop === 0) {
       startY = e.touches[0].clientY;
       pulling = true;
+      wrapper.style.transition = 'none';
+      indicator.style.transition = 'none';
     }
   }, { passive: true });
 
@@ -1703,22 +1713,60 @@ function addPullToRefresh(pageEl, onRefresh) {
     if (!pulling) return;
     const dy = e.touches[0].clientY - startY;
     if (dy > 0 && pageEl.scrollTop === 0) {
-      indicator = getOrCreateIndicator();
-      const h = Math.min(dy * 0.4, 56);
-      indicator.style.height = h + 'px';
+      if (e.cancelable) e.preventDefault();
+      
+      const dragMax = 90;
+      const dragThreshold = 55;
+      currentY = Math.min(dy * 0.45, dragMax);
+      
+      wrapper.style.transform = `translate3d(0, ${currentY}px, 0)`;
+      indicator.style.transform = `translate3d(0, ${currentY}px, 0)`;
+      
+      const progress = Math.min(currentY / dragThreshold, 1.0);
+      const circle = indicator.querySelector('.ptr-spinner-circle');
+      if (circle) {
+        const circumference = 75.4;
+        circle.style.strokeDashoffset = circumference - (progress * circumference);
+      }
+      
+      const svg = indicator.querySelector('.ptr-spinner-svg');
+      if (svg) {
+        svg.style.transform = `rotate(${-90 + progress * 360}deg)`;
+      }
     }
-  }, { passive: true });
+  }, { passive: false });
 
   pageEl.addEventListener('touchend', async () => {
     if (!pulling) return;
     pulling = false;
-    if (!indicator) return;
-    const triggered = parseInt(indicator.style.height) > 40;
-    indicator.style.height = triggered ? '44px' : '0';
+    
+    wrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+    indicator.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+    
+    const triggered = currentY >= 50;
     if (triggered) {
-      try { await onRefresh(); } catch(e) {}
+      wrapper.style.transform = 'translate3d(0, 50px, 0)';
+      indicator.style.transform = 'translate3d(0, 50px, 0)';
+      indicator.classList.add('ptr-refreshing');
+      
+      try {
+        await onRefresh();
+      } catch(err) {
+        console.error(err);
+      }
+      
+      setTimeout(() => {
+        wrapper.style.transform = 'translate3d(0, 0, 0)';
+        indicator.style.transform = 'translate3d(0, 0, 0)';
+        setTimeout(() => {
+          indicator.classList.remove('ptr-refreshing');
+        }, 300);
+      }, 800);
+    } else {
+      wrapper.style.transform = 'translate3d(0, 0, 0)';
+      indicator.style.transform = 'translate3d(0, 0, 0)';
     }
-    setTimeout(() => { if (indicator) indicator.style.height = '0'; }, 600);
+    currentY = 0;
   }, { passive: true });
 }
 
@@ -1774,7 +1822,22 @@ async function deleteSource(platform, url) {
   } catch(e) { showToast(e.message); }
 }
 
+let isStartingDownload = false;
+
 async function startDownload() {
+  if (isStartingDownload) return;
+  isStartingDownload = true;
+
+  const startBtn = document.getElementById('btn-start-dl');
+  startBtn.disabled = true;
+  startBtn.innerHTML = `
+    <svg class="ptr-spinner-svg" viewBox="0 0 28 28" style="width:16px;height:16px;animation:ptr-spin 1.4s linear infinite;margin-right:6px;overflow:visible;">
+      <circle class="ptr-spinner-track" cx="14" cy="14" r="12" style="stroke:rgba(255,255,255,0.2);stroke-width:3.5;fill:none;"></circle>
+      <circle class="ptr-spinner-circle" cx="14" cy="14" r="12" style="stroke:#ffffff;stroke-width:3.5;stroke-linecap:round;fill:none;stroke-dasharray:75.4;stroke-dashoffset:25;animation:none;"></circle>
+    </svg>
+    Starting...
+  `;
+
   try {
     // On native: ensure permission before starting anything
     if (isNativeApp) {
@@ -1798,7 +1861,12 @@ async function startDownload() {
       startSyncPolling();
     }
     (tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred('medium'));
-  } catch(e) { showToast(e.message); }
+  } catch(e) { 
+    showToast(e.message); 
+  } finally {
+    isStartingDownload = false;
+    updateHomeStats();
+  }
 }
 
 async function stopDownload() {
@@ -1931,7 +1999,60 @@ startHomePolling();
 // Inject PTR spinner CSS
 (function injectPtrCss() {
   const s = document.createElement('style');
-  s.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+  s.textContent = `
+    .ptr-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      pointer-events: none;
+      background: var(--bg);
+      color: var(--text-secondary);
+    }
+    .ptr-spinner-svg {
+      width: 26px;
+      height: 26px;
+      overflow: visible;
+      transition: transform 0.1s linear;
+    }
+    .ptr-spinner-track {
+      fill: none;
+      stroke: rgba(120, 120, 120, 0.15);
+      stroke-width: 3.5;
+    }
+    .ptr-spinner-circle {
+      fill: none;
+      stroke: var(--blue);
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-dasharray: 75.4; /* 2 * PI * 12 */
+      stroke-dashoffset: 75.4;
+      transform-origin: center;
+      transition: stroke-dashoffset 0.1s ease;
+    }
+    .ptr-indicator.ptr-refreshing .ptr-spinner-circle {
+      stroke-dashoffset: 20;
+      animation: ptr-dash 1.4s ease-in-out infinite;
+    }
+    .ptr-indicator.ptr-refreshing .ptr-spinner-svg {
+      animation: ptr-spin 1.4s linear infinite;
+    }
+
+    @keyframes ptr-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes ptr-dash {
+      0% { stroke-dashoffset: 65; transform: rotate(0deg); }
+      50% { stroke-dashoffset: 15; transform: rotate(135deg); }
+      100% { stroke-dashoffset: 65; transform: rotate(450deg); }
+    }
+  `;
   document.head.appendChild(s);
 })();
 

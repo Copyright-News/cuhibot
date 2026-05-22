@@ -1,5 +1,5 @@
 {
-  "task": "Fix Android companion app login CORS mismatch and harden platform deletion validation in server.py",
+  "task": "Fix companion app download logics (media filtering, queue retention, and premium pull-to-refresh UI)",
   "workspace": "cuhibot",
   "original_model": "Antigravity",
   "current_model": "Antigravity",
@@ -9,5 +9,5 @@
   "next_part": null,
   "next_function": null,
   "status": "complete",
-  "style_notes": "CORS allowed origins updated to include https://localhost, platform deletion validated against PLATFORMS, get_file path resolution made strict=False, all unit tested."
+  "style_notes": "Implemented media filtering in build_gdl_cmd and realtime_download; retained download triggers in queue check when downloading; upgraded PTR to use GPU transforms and SVG circular spinner in app.html."
 }

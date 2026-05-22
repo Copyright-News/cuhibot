@@ -968,6 +968,7 @@ def build_gdl_cmd(
     url: str,
     mode: str,
     platform: str,
+    media_filter: str = "mixed",
 ) -> tuple[list[str], str]:
     """Returns (argv, effective_url). Explicit branch for every mode."""
     cmd = [
@@ -981,33 +982,28 @@ def build_gdl_cmd(
         "--no-mtime",
     ]
 
-    if mode == "photos":
+    if mode == "stories":
+        effective = stories_url_for(platform, url)
+    elif mode == "highlights":
+        effective = highlights_url_for(platform, url)
+    else:
+        effective = url
+
+    if media_filter == "photos":
         cmd += [
             "--filter",
             "extension in ('jpg','jpeg','png','gif','webp','bmp')",
         ]
-        effective = url
-    elif mode == "videos":
+    elif media_filter == "videos":
         cmd += [
             "--filter",
             "extension in ('mp4','webm','mkv','mov','avi','m4v')",
         ]
-        effective = url
-    elif mode == "documents":
+    elif media_filter == "documents":
         cmd += [
             "--filter",
             "extension in ('jpg','jpeg','png','gif','webp','bmp','mp4','webm','mkv','mov','avi','m4v')",
         ]
-        effective = url
-    elif mode == "stories":
-        effective = stories_url_for(platform, url)
-    elif mode == "highlights":
-        effective = highlights_url_for(platform, url)
-    elif mode in ("both", "mixed"):
-        # 'both' is a meta-mode, 'mixed' is the actual run mode for both
-        effective = url
-    else:
-        effective = url
 
     if cookie.exists():
         cmd += ["--cookies", str(cookie)]
@@ -1258,6 +1254,7 @@ async def realtime_download(
     stop: asyncio.Event,
     status: Status | None = None,
     ignore_archive: bool = False,
+    media_filter: str = "mixed",
 ) -> int:
     """Streams gallery-dl output: detects fully-written media via stdout parsing."""
     out_dir = (
@@ -1291,11 +1288,11 @@ async def realtime_download(
             pass
         return 0
 
-    if mode == "photos":
+    if media_filter == "photos":
         exts, send_as = PHOTO_EXT, "photos"
-    elif mode == "videos":
+    elif media_filter == "videos":
         exts, send_as = VIDEO_EXT, "videos"
-    elif mode == "documents":
+    elif media_filter == "documents":
         exts, send_as = PHOTO_EXT | VIDEO_EXT, "documents"
     else:
         exts, send_as = PHOTO_EXT | VIDEO_EXT, "mixed"
@@ -1308,6 +1305,7 @@ async def realtime_download(
         url=url,
         mode=mode,
         platform=platform,
+        media_filter=media_filter,
     )
 
     kwargs = {}
@@ -1640,6 +1638,7 @@ async def do_download(
                     sleep=sleep,
                     stop=stop,
                     status=status,
+                    media_filter=run_mode,
                 )
                 total += n
                 if n > 0:
@@ -1707,6 +1706,7 @@ async def do_special_download(
             sleep=sleep,
             stop=stop,
             status=status,
+            media_filter=mode,
         )
         if n > 0:
             await append_history(
@@ -2679,6 +2679,7 @@ async def cmd_link(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 stop=stop,
                 status=status,
                 ignore_archive=True,
+                media_filter="documents",
             )
         finally:
             _release(uid, stop)
@@ -2795,6 +2796,7 @@ async def _scheduled_job(ctx: ContextTypes.DEFAULT_TYPE) -> None:
                     sleep=sl,
                     stop=ev,
                     status=status,
+                    media_filter="mixed",
                 )
         await status.set(
             f"⏰ *Scheduled download done!* {total} file(s).", force=True
@@ -2929,6 +2931,13 @@ async def _run_miniapp_download(
     user_settings = await read_settings(uid)
 
     try:
+        # Clear the downloads directory at the start of every run to guarantee that only files
+        # downloaded during this active run are served to the companion app, preventing duplicate downloads of old files.
+        try:
+            await asyncio.to_thread(wipe_downloads, uid)
+        except Exception as wipe_err:
+            logger.error("Failed to wipe downloads directory at run start for uid=%s: %s", uid, wipe_err)
+
         for platform in platforms_to_run:
             if stop_event.is_set():
                 break
@@ -2976,6 +2985,7 @@ async def _run_miniapp_download(
                         sleep=sleep_sec,
                         stop=stop_event,
                         ignore_archive=force,
+                        media_filter=send_as,
                     )
                     total_sent_count += sent
 
@@ -3065,6 +3075,8 @@ async def poll_miniapp_queue_loop(app: Application) -> None:
                 for trigger_file in DATA_ROOT.glob("*/download_trigger.json"):
                     try:
                         uid = int(trigger_file.parent.name)
+                        if uid in ACTIVE_USERS:
+                            continue
                         with locked_file(trigger_file):
                             if not trigger_file.exists():
                                 continue
@@ -3072,14 +3084,13 @@ async def poll_miniapp_queue_loop(app: Application) -> None:
                                 trigger_file.read_text(encoding="utf-8")
                             )
                             trigger_file.unlink(missing_ok=True)
-                        if uid not in ACTIVE_USERS:
-                            await MINIAPP_QUEUE.put(
-                                {
-                                    "type": "download",
-                                    "uid": uid,
-                                    "data": trigger_data,
-                                }
-                            )
+                        await MINIAPP_QUEUE.put(
+                            {
+                                "type": "download",
+                                "uid": uid,
+                                "data": trigger_data,
+                            }
+                        )
                     except Exception:
                         continue
 
@@ -3145,15 +3156,16 @@ async def poll_miniapp_queue_fallback(
     for trigger_file in DATA_ROOT.glob("*/download_trigger.json"):
         try:
             uid = int(trigger_file.parent.name)
+            if uid in ACTIVE_USERS:
+                continue
             with locked_file(trigger_file):
                 if not trigger_file.exists():
                     continue
                 trigger_data = json.loads(trigger_file.read_text(encoding="utf-8"))
                 trigger_file.unlink(missing_ok=True)
-            if uid not in ACTIVE_USERS:
-                await MINIAPP_QUEUE.put(
-                    {"type": "download", "uid": uid, "data": trigger_data}
-                )
+            await MINIAPP_QUEUE.put(
+                {"type": "download", "uid": uid, "data": trigger_data}
+            )
         except Exception:
             continue
 
