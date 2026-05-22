@@ -536,6 +536,11 @@ async def healthz():
     try:
         if not check_disk_space(DATA_ROOT, required_mb=50):
             raise HTTPException(503, "Low disk space (< 50 MB)")
+        
+        # Calculate free space for response
+        import shutil
+        usage = shutil.disk_usage(DATA_ROOT if DATA_ROOT.exists() else Path("/"))
+        free_mb = usage.free / (1024 * 1024)
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e

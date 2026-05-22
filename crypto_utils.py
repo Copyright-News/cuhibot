@@ -1,5 +1,5 @@
 """
-crypto_utils.py — Cryptographic utilities for secure cookie rest encryption.
+crypto_utils.py — Cryptographic utilities for secure cookie at-rest encryption.
 """
 
 import os
