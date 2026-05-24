@@ -1,8 +1,8 @@
 # 🤖 Cuhi
 
-### Premium Media Archival Ecosystem (Telegram Bot, Mini App & Native Android App)
+### Premium Media Archival Ecosystem (Telegram Bot & Mini App)
 
-Cuhi is a self-hosted premium media archival ecosystem featuring a Telegram bot, an iOS-inspired **Telegram Mini App**, and a fully optimized **Native Android App**. Archiving content from Instagram, TikTok, Facebook, and X (Twitter) has never been this seamless — delivered directly to your Telegram channels, local documents, or phone gallery.
+Cuhi is a self-hosted premium media archival ecosystem featuring a Telegram bot and an iOS-inspired **Telegram Mini App**. Archiving content from Instagram, TikTok, Facebook, and X (Twitter) has never been this seamless — delivered directly to your Telegram channels.
 
 <p align="center">
   <b>v2.3.0</b> · Stable Release · Production Hardened
@@ -17,7 +17,6 @@ Most downloaders are black boxes. You don't know who has your cookies or where y
 - **Self-Hosted** — You own the code. Your cookies and sessions live on your server, not ours.
 - **Async Native** — Full non-blocking I/O with a dedicated thread pool. Stays responsive under heavy multi-user load.
 - **Mini App Dashboard** — A native iOS-style control panel built right inside Telegram. Manage sources, trigger downloads, view history — all without leaving the app.
-- **Standalone Android Companion** — Packageable as a high-fidelity native app featuring robust offline local saving, fluid layouts, and persistent media gallery integration.
 - **Production Hardened** — OS-level file locking, atomic writes, executor-backed async I/O, and zero bare exceptions.
 - **Set & Forget** — Designed to run 24/7 with automatic schedule recovery after restarts.
 
@@ -26,31 +25,6 @@ Most downloaders are black boxes. You don't know who has your cookies or where y
 ## 📱 Mini App
 
 The Cuhi Mini App is a full-featured dashboard that runs natively inside Telegram. Built with an iOS-inspired design language.
-
----
-
-## 🤖 Standalone Android Native App
-
-Cuhi is fully integrated and optimized to run as a native mobile application via Capacitor.
-
-### Native Mobile Enhancements:
-- **Secure Local Session Authentication:** Integrates seamlessly with your server via Telegram-issued secure `/app` session tokens, eliminating simulated flows or third-party OAuth overhead while keeping configuration private and direct.
-- **Responsive Keyboard Viewport Integration:** Re-engineered with top-aligned flex-start structures and dynamic scroll calculations. When the virtual keyboard is shown, input fields and headers adjust gracefully with zero layout squashing or overlapping glitches.
-- **Lenient Scoped Storage Permission Handlers:** Engineered specifically for modern Android 11+ and 13+ Scoped Storage guidelines. The app requests media permissions but never halts the sync loop if optional gallery permissions are disabled, writing files natively to your device's standard `Documents/Cuhi` folder.
-- **Adaptive Native Settings Panel:** Dynamically hides Telegram-specific forward channels and Cron server schedulers, keeping the mobile interface clean, responsive, and tailored for standalone on-device archival.
-
-### 📋 Release & Synchronisation Checklist
-Before compiling release builds or deploying changes to mobile devices, always execute the UI synchronisation flow to prevent mirror drift:
-1. Make your primary HTML modifications inside `app.html` (the absolute source of truth).
-2. Propagate updates across all web and Capacitor mirror locations:
-   ```bash
-   python sync_ui.py
-   ```
-3. Bundle and compile updated assets for your native Android builds:
-   ```bash
-   npx cap sync
-   ```
-This checklist is automatically enforced in the CI test suite via automated byte-level mirror checks, ensuring that production apps never launch with missing or drifted assets.
 
 ### Features
 
@@ -72,6 +46,8 @@ This checklist is automatically enforced in the CI test suite via automated byte
 - Gradient stat card accents (blue, green, orange, purple)
 - Apple Color Emoji font stack for consistent icons across platforms
 - Haptic feedback on all interactions via Telegram WebApp API
+
+---tions via Telegram WebApp API
 
 ---
 
@@ -117,36 +93,7 @@ The ecosystem can be deployed anywhere Python 3.11+ can run (Docker, VPS, Cloud 
 
 ### Local Development & Testing (Windows)
 
-Running the Cuhi mobile app or Mini App locally requires exposing your local machine to the internet so the mobile companion (or Telegram's servers) can reach your local FastAPI server. For this purpose, a pre-configured automation script is provided.
-
-#### 📡 Local Request Architecture
-
-Below is how the request and sync flow is established when running locally:
-
-```mermaid
-sequenceDiagram
-    participant App as Standalone Android App
-    participant CF as Cloudflare Edge (Public HTTPS)
-    participant LocalHost as Local Port 8080 (bot.py/server.py)
-    participant TG as Telegram API
-    participant Target as Media Platforms (Insta/TikTok/X/FB)
-
-    App->>CF: API Call (e.g. GET /api/stats, POST /api/download)
-    Note over CF: Cloudflare Tunnel forwards public HTTPS to local HTTP port 8080
-    CF->>LocalHost: Forwarded HTTP request
-    LocalHost-->>CF: HTTP Response
-    CF-->>App: Mobile App receives data/acknowledgment
-    
-    Note over LocalHost: bot.py queue worker processes the download request
-    LocalHost->>Target: Download media via gallery-dl
-    Target-->>LocalHost: Media files saved to local data/{uid}/downloads/
-    
-    loop Real-time Polling Sync
-        App->>LocalHost: Download pending files via /api/files
-        LocalHost-->>App: Stream media file bytes
-        Note over App: Save to phone's standard Documents/Cuhi gallery folder
-    end
-```
+Running the Cuhi Mini App locally requires exposing your local machine to the internet so Telegram's servers can reach your local FastAPI server. For this purpose, a pre-configured automation script is provided.
 
 #### 🛠️ Step-by-Step Lifecycle of `run_local.bat`
 
@@ -170,9 +117,9 @@ When you double-click or run [run_local.bat](file:///e:/Copyright%20News/cuhibot
 2. **Launch Services**:
    - Double-click or run [run_local.bat](file:///e:/Copyright%20News/cuhibot/run_local.bat).
    - Wait 5–10 seconds. The console will print your public Tunnel URL and launch the **Telegram Bot** console.
-3. **Link Mobile/Mini App**:
-   - Run `python sync_ui.py` in the root folder, then execute `npx cap sync` in the `mobile_app/` folder to sync the UI assets and bundle the configuration.
-   - Run/Compile the project inside **Android Studio** onto your device or emulator. It will automatically connect directly to your local server over the secure tunnel!
+3. **Link Mini App**:
+   - Run `python sync_ui.py` in the root folder to sync the UI assets.
+   - Open your bot in Telegram and launch the WebApp. It will connect automatically!
 
 ---
 

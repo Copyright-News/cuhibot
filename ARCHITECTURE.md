@@ -27,14 +27,14 @@ Cuhi is a modular self-hosted media archiving system consisting of three main la
                 │ (File I/O)               │ (File stream / JSON)
                 ▼                          ▼
         ┌───────────────┐          ┌───────────────┐
-        │ Local Storage │◄─────────┤  Android App  │
-        │    (data/)    │  Syncs   │  (Capacitor)  │
-        └───────────────┘  Files   └───────────────┘
+        │ Local Storage │          │   User Device │
+        │    (data/)    │          │  (Browser UI) │
+        └───────────────┘          └───────────────┘
 ```
 
 1. **The Telegram Interface (`bot.py`)**: Handles user commands (`/start`, `/run`, `/channel`), schedules, and direct Telegram-based archival.
-2. **The FastAPI Backend (`server.py`)**: Hosts the REST API endpoint used by both the Telegram Mini App and the Standalone Android App. It runs inside the bot's process as a background thread.
-3. **The Frontend (`app.html` & `mobile_app`)**: Built as a responsive iOS-inspired single-page application. Serves as the user dashboard. When running as a native Android app via Capacitor, it handles downloading files from the backend directly to the device's native storage.
+2. **The FastAPI Backend (`server.py`)**: Hosts the REST API endpoint used by the Telegram Mini App. It runs inside the bot's process as a background thread.
+3. **The Frontend (`app.html`)**: Built as a responsive iOS-inspired single-page application. Serves as the user dashboard.
 
 ---
 
@@ -51,7 +51,6 @@ Here is what every file in the repository does:
 * **[requirements.txt](file:///e:/Copyright%20News/cuhibot/requirements.txt)**: Lists all external Python dependencies (e.g., `python-telegram-bot`, `fastapi`, `uvicorn`, `gallery-dl`).
 * **`data/` (Auto-generated)**: Directory containing user directories (grouped by Telegram User ID). Stores downloaded media files, sync logs, active schedules, and target profile lists.
 * **`cookies/` (Auto-generated)**: Directory where users can upload cookies files for age-restricted or private profile archiving.
-* **`mobile_app/`**: Contains the source configuration for the native Android App wrapper, utilizing Capacitor to bridge JavaScript APIs to native Android SDKs.
 
 ---
 
@@ -69,8 +68,3 @@ Here is what every file in the repository does:
 * **No Passwords**: The Mini App does not require usernames or passwords. Instead, it relies on Telegram's secure web application initialization payload (`initData`).
 * **HMAC Validation**: When the frontend makes an API call, it sends the `initData` query string in the `Authorization` header. The backend (`server.py`) takes your `BOT_TOKEN` and validates the signature using HMAC-SHA256. This guarantees that only requests originating from authentic Telegram clients are processed.
 
-### C. Android Native Synchronization
-* **Server-side Storage**: When a download is triggered from an Android app target, `bot.py` skips uploading the files to Telegram. Instead, it saves the files in `data/{uid}/downloads/`.
-* **Sync Polling**: The frontend constantly polls `/api/stats`. When it detects `stats.files_waiting > 0`, it invokes a sync routine.
-* **Native Writing**: The app requests media files via the `/api/files` endpoint, downloads the raw bytes, and writes them using the Capacitor `@capacitor/filesystem` plugin to the device's physical storage (`Documents/Cuhi`).
-* **Gallery Integration**: Once written, it calls the native Media plugin to register the files in the Android system's media gallery so they appear in the user's photos app instantly.
