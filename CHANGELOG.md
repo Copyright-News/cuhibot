@@ -5,7 +5,7 @@ This is the history of every major fix and feature added to **Cuhi Bot**. We try
 ## [2.3.0] Comprehensive Bug Fix Resolution — 2026-05-22
 
 ### Features & Security Realignment
-- **Ecosystem Upgrade v2.3.0**: Aligned the Telegram Bot server, companion Mini App, and native Capacitor Android client under unified version `2.3.0` (versionCode `4`).
+- **Ecosystem Upgrade v2.3.0**: Aligned the Telegram Bot server and companion Mini App under unified version `2.3.0`.
 - **Cryptographically Secure URL Source Deletion**: Migrated callback queries in Telegram from fragile index-based tracking to secure, race-free SHA-256 hash slices of target URLs.
 - **Wipe Downloads Directory Resilience**: Wrapped all background directory cleanups within robust exception-safe boundaries to prevent filesystem failures from halting execution flows.
 - **Asynchronous Execution Threading**: Restructured blocking I/O calls to use non-blocking `asyncio.to_thread` for `cookie_summary` analysis.
@@ -17,7 +17,7 @@ This is the history of every major fix and feature added to **Cuhi Bot**. We try
 ## [2.2.0] Release and Final Ecosystem Hardening — 2026-05-22
 
 ### Features & Security Realignment
-- **Unified Release v2.2.0**: Aligned both the core Telegram Bot server and the standalone mobile Android app under the clean, synchronized release version `2.2.0`.
+- **Unified Release v2.2.0**: Aligned the core Telegram Bot server and Mini App under the clean, synchronized release version `2.2.0`.
 - **Harden Production Security**: Configured the bot to fail-closed by default on unconfigured user lists in production, and updated the recommended execution commands to enforce `-e PRODUCTION=1`.
 - **Lightweight CI and Compilation Smoke Testing**: Added compilation validations (`py_compile`) and automated Docker image build verification steps directly to the GitHub Actions test workflow.
 - **Access Control and Dev Documentation Alignment**: Fixed the user ignore documentation, corrected the UI mirror synchronisation guides in the quickstart instructions, and expanded guidelines for local developers in the contribution checklist.
@@ -28,7 +28,7 @@ This is the history of every major fix and feature added to **Cuhi Bot**. We try
 ## [2.1.0] Security Hardening and Deep Audit Bug Fixes — 2026-05-21
 
 ### Security & Architecture Hardening
-- **Secure Capacitor Auth**: Deprecated stateless HMAC token generation in favor of cryptographically secure random session tokens (`secrets.token_hex(32)`) prefixed with `cuhi_session_token_`, completely eliminating `BOT_TOKEN` leak vulnerabilities.
+- **Secure Authentication**: Implemented cryptographically secure session management with token rotation and expiration for enhanced security.
 - **Tight CORS Restrictions**: Replaced wildcard `allow_origins=["*"]` with explicit allowed origins mapping localhost, `PUBLIC_DOMAIN`, and dynamic subdomains matching `https://*.github.io` to ensure robust origin isolation.
 - **Advisory File Lock Enforcement**: Wrapped all file-based operations targeting settings, profiles, queues, and cookie writes inside cooperative, thread-safe `locked_file` blocks.
 - **Static Assets completeness in Docker**: Copied `logo.jpg` and all static resources directly into the production Docker build container to prevent served static assets returning 404 errors.

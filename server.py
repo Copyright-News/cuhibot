@@ -107,11 +107,7 @@ COOKIE_FILE = {
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("cuhi.server")
 
-# ── Auth & Session Store ──────────────────────────────────────────────
-SESSIONS_FILE = DATA_ROOT / "sessions.json"
-
-from session_manager import SessionManager
-session_manager = SessionManager(SESSIONS_FILE)
+# ── Auth ──────────────────────────────────────────────────────────────
 
 from file_utils import validate_file_path, check_disk_space
 
@@ -195,30 +191,15 @@ def write_json_direct(path: Path, data):
         )
 
 
-def get_sessions() -> dict:
-    return read_json_direct(SESSIONS_FILE, default={})
-
-
-def validate_token(token: str) -> dict | None:
-    return session_manager.validate_session(token)
-
-
 def _validate_init_data(init_data: str) -> dict:
     """
-    Validate Telegram WebApp initData HMAC-SHA256 or standalone App Token.
+    Validate Telegram WebApp initData HMAC-SHA256.
     Returns user dict if valid. Raises HTTPException(401) if invalid/missing.
     """
     if not init_data:
         raise HTTPException(
-            status_code=401, detail="Open this app inside Telegram or log in"
+            status_code=401, detail="Open this app inside Telegram"
         )
-
-    # Native Android App Token: secure session token validation
-    if init_data.startswith("cuhi_session_token_"):
-        session = validate_token(init_data)
-        if session:
-            return session
-        raise HTTPException(status_code=401, detail="Invalid or Expired App Token")
 
     parsed = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
     received_hash = parsed.pop("hash", None)
@@ -245,44 +226,27 @@ def _validate_init_data(init_data: str) -> dict:
 
 
 async def get_uid(request: Request) -> int:
-    """FastAPI dependency: extract validated user_id from Bearer token or X-Init-Data."""
-    auth_header = request.headers.get("Authorization", "")
-    if auth_header.startswith("Bearer "):
-        token = auth_header.split(" ", 1)[1]
-        session = validate_token(token)
-        if session:
-            return int(session["id"])
-
+    """FastAPI dependency: extract validated user_id from X-Init-Data."""
     init_data = request.headers.get("X-Init-Data", "")
     if init_data:
-        try:
-            user = _validate_init_data(init_data)
-            uid = user.get("id")
-            if uid:
-                return int(uid)
-        except Exception:
-            pass
+        user = _validate_init_data(init_data)
+        uid = user.get("id")
+        if uid:
+            return int(uid)
 
     raise HTTPException(
-        status_code=401, detail="Open this app inside Telegram or log in"
+        status_code=401, detail="Open this app inside Telegram"
     )
 
 
 async def get_user(request: Request) -> dict:
     """Like get_uid but returns full user dict."""
-    auth_header = request.headers.get("Authorization", "")
-    if auth_header.startswith("Bearer "):
-        token = auth_header.split(" ", 1)[1]
-        session = validate_token(token)
-        if session:
-            return session
-
     init_data = request.headers.get("X-Init-Data", "")
     if init_data:
         return _validate_init_data(init_data)
 
     raise HTTPException(
-        status_code=401, detail="Open this app inside Telegram or log in"
+        status_code=401, detail="Open this app inside Telegram"
     )
 
 

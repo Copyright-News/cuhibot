@@ -171,9 +171,7 @@ def start_mini_app_server():
 
 
 DATA_ROOT = Path(os.environ.get("DATA_ROOT", "./data"))
-from session_manager import SessionManager
 from file_utils import verify_file_type, sanitize_command_arg
-session_manager = SessionManager(DATA_ROOT / "sessions.json")
 COOKIES_ROOT = Path(os.environ.get("COOKIES_ROOT", "./cookies"))
 
 # (profiles_filename, cookie_filename, request_sleep_seconds)
@@ -1477,18 +1475,10 @@ async def realtime_download(
         nonlocal sent_count, downloaded_bytes
         if buffer and not stop.is_set():
             batch = list(buffer)
-            if target == "android":
-                # Android: files stay on disk for /api/files endpoint.
-                # Do NOT upload to Telegram and do NOT count as "sent" to Telegram.
-                # sent_count tracks how many files were written to disk for this run.
-                n = len(batch)
+            n = await flush(target, batch, send_as, stop)
+            if n > 0:
                 sent_count += n
-                # [FIXED] skip add_sent_files for android — files are not Telegram-sent
-            else:
-                n = await flush(target, batch, send_as, stop)
-                if n > 0:
-                    sent_count += n
-                    await add_sent_files(uid, n)
+                await add_sent_files(uid, n)
             buffer.clear()
 
     async def _read_stdout():
@@ -1951,32 +1941,6 @@ async def _answer(q) -> None:
         await q.answer()
     except Exception:
         pass
-
-
-async def cmd_app(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    """Generate a login token for the standalone Android App."""
-    if not update.message or not update.effective_user:
-        return
-    uid = update.effective_user.id
-    if ALLOWED_USERS and uid not in ALLOWED_USERS and uid not in ADMIN_IDS:
-        return
-
-    session_res = await asyncio.get_running_loop().run_in_executor(
-        _IO_POOL,
-        session_manager.create_session,
-        uid,
-        update.effective_user.username or "app",
-        update.effective_user.first_name or "App User"
-    )
-    app_token = session_res["access_token"]
-
-    text = (
-        "📱 *Android App Login*\n\n"
-        "Copy the token below and paste it into the Android App to log in:\n\n"
-        f"`{app_token}`\n\n"
-        "Keep this token secret!"
-    )
-    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -3418,7 +3382,6 @@ def main() -> None:
     # Navigation & Core
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("menu", cmd_start))
-    app.add_handler(CommandHandler("app", cmd_app))
     app.add_handler(CommandHandler("status", cmd_status))
 
     # Management

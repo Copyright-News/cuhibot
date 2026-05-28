@@ -50,6 +50,5 @@ docker-compose.override.yml
 .Trashes
 ehthumbs.db
 
-# ── Android / Capacitor ────────────────────────────────────────────────────────
+# ── Local Development ─────────────────────────────────────────────────────────
 cloudflared.exe
-

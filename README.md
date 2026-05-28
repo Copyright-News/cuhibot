@@ -2,7 +2,7 @@
 
 ### Premium Media Archival Ecosystem (Telegram Bot & Mini App)
 
-Cuhi is a self-hosted premium media archival ecosystem featuring a Telegram bot and an iOS-inspired **Telegram Mini App**. Archiving content from Instagram, TikTok, Facebook, and X (Twitter) has never been this seamless — delivered directly to your Telegram channels.
+Cuhi is a self-hosted premium media archival ecosystem featuring a Telegram bot and an iOS-inspired **Telegram Mini App**. Archive content from Instagram, TikTok, Facebook, and X (Twitter) seamlessly — delivered directly to your Telegram channels.
 
 <p align="center">
   <b>v2.3.0</b> · Stable Release · Production Hardened
@@ -46,8 +46,6 @@ The Cuhi Mini App is a full-featured dashboard that runs natively inside Telegra
 - Gradient stat card accents (blue, green, orange, purple)
 - Apple Color Emoji font stack for consistent icons across platforms
 - Haptic feedback on all interactions via Telegram WebApp API
-
----tions via Telegram WebApp API
 
 ---
 

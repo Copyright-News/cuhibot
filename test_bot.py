@@ -19,19 +19,11 @@ class TestCuhiBot(unittest.TestCase):
         self.orig_data_root = bot.DATA_ROOT
         self.orig_cookies_root = bot.COOKIES_ROOT
         self.orig_server_data_root = server.DATA_ROOT
-        self.orig_sessions_file = server.SESSIONS_FILE
         
         # Override paths to point to temp directories to prevent modifying prod data
         bot.DATA_ROOT = self.test_dir / "data"
         bot.COOKIES_ROOT = self.test_dir / "cookies"
         server.DATA_ROOT = self.test_dir / "data"
-        server.SESSIONS_FILE = self.test_dir / "data" / "sessions.json"
-        
-        # Override session_manager paths as well
-        if hasattr(server, "session_manager"):
-            server.session_manager.sessions_file = server.SESSIONS_FILE
-        if hasattr(bot, "session_manager"):
-            bot.session_manager.sessions_file = bot.DATA_ROOT / "sessions.json"
         
         # Ensure directories exist
         bot.DATA_ROOT.mkdir(parents=True, exist_ok=True)
@@ -42,7 +34,6 @@ class TestCuhiBot(unittest.TestCase):
         bot.DATA_ROOT = self.orig_data_root
         bot.COOKIES_ROOT = self.orig_cookies_root
         server.DATA_ROOT = self.orig_server_data_root
-        server.SESSIONS_FILE = self.orig_sessions_file
         
         # Clean up temporary directory
         shutil.rmtree(self.test_dir, ignore_errors=True)
@@ -98,41 +89,6 @@ class TestCuhiBot(unittest.TestCase):
             self.assertEqual(val, 154.3)  # Rounded to 1 decimal place
         finally:
             loop.close()
-
-    def test_session_auth_validation(self):
-        # Test invalid token format
-        self.assertIsNone(server.validate_token("invalid_token_format"))
-        
-        # Test valid token format but empty sessions file
-        token = "cuhi_session_token_abc123xyz"
-        self.assertIsNone(server.validate_token(token))
-        
-        # Test session creation and validation (not expired)
-        session_data = {
-            token: {
-                "id": 12345,
-                "first_name": "Test",
-                "username": "testuser",
-                "expires_at": time.time() + 3600  # 1 hour in future
-            }
-        }
-        server.SESSIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        server.SESSIONS_FILE.write_text(json.dumps(session_data), encoding="utf-8")
-        
-        valid_session = server.validate_token(token)
-        self.assertIsNotNone(valid_session)
-        self.assertEqual(valid_session["username"], "testuser")
-        
-        # Test expired session
-        expired_token = "cuhi_session_token_expired"
-        session_data[expired_token] = {
-            "id": 12345,
-            "first_name": "Test",
-            "username": "testuser",
-            "expires_at": time.time() - 3600  # 1 hour in past
-        }
-        server.SESSIONS_FILE.write_text(json.dumps(session_data), encoding="utf-8")
-        self.assertIsNone(server.validate_token(expired_token))
 
     def test_cron_preset_mappings(self):
         # Verify the cron mapping logic used in inline keyboard schedules
