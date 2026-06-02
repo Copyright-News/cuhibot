@@ -50,7 +50,7 @@ Here is what every file in the repository does:
 * **[Dockerfile](file:///e:/Copyright%20News/cuhibot/Dockerfile)**: Defines the production Docker container configuration, installing runtime requirements like Python, `ffmpeg`, and `curl`.
 * **[requirements.txt](file:///e:/Copyright%20News/cuhibot/requirements.txt)**: Lists all external Python dependencies (e.g., `python-telegram-bot`, `fastapi`, `uvicorn`, `gallery-dl`).
 * **`data/` (Auto-generated)**: Directory containing user directories (grouped by Telegram User ID). Stores downloaded media files, sync logs, active schedules, and target profile lists.
-* **`cookies/` (Auto-generated)**: Directory where users can upload cookies files for age-restricted or private profile archiving.
+* **`cookies/` (Auto-generated)**: Directory where users can upload cookies files for age-restricted or private profile archiving. Cookies are automatically encrypted (Fernet) at rest as `.enc` files — plaintext `.txt` files are never stored after upload.
 
 ---
 
@@ -67,4 +67,10 @@ Here is what every file in the repository does:
 ### B. Secure Authentication
 * **No Passwords**: The Mini App does not require usernames or passwords. Instead, it relies on Telegram's secure web application initialization payload (`initData`).
 * **HMAC Validation**: When the frontend makes an API call, it sends the `initData` query string in the `Authorization` header. The backend (`server.py`) takes your `BOT_TOKEN` and validates the signature using HMAC-SHA256. This guarantees that only requests originating from authentic Telegram clients are processed.
+
+### C. Cookie Encryption at Rest
+* **No Plaintext on Disk**: All cookie files stored in the `cookies/` directory are encrypted using Fernet (symmetric AES-128-CBC with HMAC integrity from the `cryptography` library).
+* **Upload Flow**: When a user uploads a cookie file via Telegram, `bot.py` saves the plaintext, immediately encrypts it to a `.enc` file using `crypto_utils.get_crypto().encrypt_cookie()`, then deletes the plaintext. If encryption fails, the plaintext remains and the user is warned.
+* **Decryption Flow**: Encrypted `.enc` cookies are decrypted on-the-fly via a temporary file when `gallery-dl` is invoked. The temp file is securely zeroed and removed after the download completes.
+* **Key Management**: The encryption key is provided via the `COOKIE_ENCRYPTION_KEY` environment variable. If unset, cookies remain in plaintext as a fallback.
 

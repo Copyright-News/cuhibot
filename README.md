@@ -17,7 +17,7 @@ Most downloaders are black boxes. You don't know who has your cookies or where y
 - **Self-Hosted** — You own the code. Your cookies and sessions live on your server, not ours.
 - **Async Native** — Full non-blocking I/O with a dedicated thread pool. Stays responsive under heavy multi-user load.
 - **Mini App Dashboard** — A native iOS-style control panel built right inside Telegram. Manage sources, trigger downloads, view history — all without leaving the app.
-- **Production Hardened** — OS-level file locking, atomic writes, executor-backed async I/O, and zero bare exceptions.
+- **Production Hardened** — OS-level file locking, atomic writes, executor-backed async I/O, zero bare exceptions, and Fernet cookie encryption at rest.
 - **Set & Forget** — Designed to run 24/7 with automatic schedule recovery after restarts.
 
 ---
@@ -55,11 +55,11 @@ The Cuhi Mini App is a full-featured dashboard that runs natively inside Telegra
 - 🎬 **Everything Included** — Photos, videos, stories, highlights — packaged into 10-item media groups
 - 📡 **Auto-Forwarding** — Send media to your private channels or groups automatically
 - ⏱️ **Scheduled Downloads** — Set 6h / 12h / 24h intervals with restart recovery
-- 🍪 **Cookie Support** — Upload your own cookies for private and age-restricted content
+- 🍪 **Cookie Support** — Upload your own cookies for private and age-restricted content; automatically encrypted (Fernet) at rest
 - 🗂️ **Smart Archive** — Remembers what was downloaded to avoid duplicates
 - 🔗 **Instant Links** — Use `/link <url>` for one-off downloads
 - 📤 **Import/Export** — Move your sources between instances
-- 🔒 **Secure** — Admin system, user allowlists, rate limiting, and URL validation
+- 🔒 **Secure** — Admin system, user allowlists, rate limiting, URL validation, and cookie encryption at rest
 
 ---
 

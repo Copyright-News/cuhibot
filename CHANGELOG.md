@@ -2,6 +2,21 @@
 
 This is the history of every major fix and feature added to **Cuhi Bot**. We try to keep things clear and readable.
 
+## [2.3.1] Post-Release Audit Fixes — 2026-06-03
+
+### Cookie Security & Bug Fixes
+- **Automatic Cookie Encryption on Upload**: User-uploaded cookie files via Telegram are now automatically encrypted (Fernet) at rest before the plaintext is removed. Previously, uploaded cookies were stored as plaintext `.txt` files, defeating the encryption-at-rest guarantee.
+- **Encrypted Cookie Summary Detection**: The `_cookie_summary_sync` function now checks for both `.txt` and `.enc` cookie files across user and global directories, so the bot correctly reports all available cookies after migration.
+- **Safe Decryption Failure Handling**: If cookie decryption fails in `realtime_download`, the system now falls back to a non-existent cookie path instead of passing the raw encrypted `.enc` file to `gallery-dl` via `--cookies`, which would silently fail to parse.
+- **Stop Download User Feedback**: The `m_stop` callback now answers with a confirmation toast ("⏹️ Download stopped") or an alert if no download is active, so users get immediate feedback.
+- **Removed Dead Rate-Limit Handler**: Eliminated duplicate `_rate_limit_exceeded_handler` registration in `server.py` — the custom handler was immediately overriding it, making the default handler dead code.
+
+### Code Quality
+- **Type Hint Correction**: Changed `func: callable` (built-in function used as a type) to `func: Callable` from `typing` in `_atomic_edit_profiles_sync`.
+- **Module-Level Imports**: Consolidated scattered inline `import secrets` and `from crypto_utils import get_crypto` to module level across `bot.py` and `server.py`, eliminating redundant imports on every function call.
+
+---
+
 ## [2.3.0] Comprehensive Bug Fix Resolution — 2026-05-22
 
 ### Features & Security Realignment
